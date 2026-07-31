@@ -1,0 +1,1938 @@
+const TEMPLATE_CONFIGS = [
+    { id: "modern-01",    name: "Classic",       cat: "modern",       desc: "Sidebar left · Teal" },
+    { id: "modern-02",    name: "Inverse",        cat: "modern",       desc: "Sidebar left · Navy" },
+    { id: "modern-03",    name: "Accent",         cat: "modern",       desc: "Bold labels · Warm" },
+    { id: "ats-01",       name: "Clean",          cat: "ats",          desc: "Single column · Minimal" },
+    { id: "ats-02",       name: "Split",          cat: "ats",          desc: "Classic split header" },
+    { id: "ats-03",       name: "Compact",        cat: "ats",          desc: "High density · Warm" },
+    { id: "ats-04",       name: "Caps",           cat: "ats",          desc: "Small caps · Forest" },
+    { id: "executive-01", name: "Prestige",       cat: "executive",    desc: "Dark header · Formal" },
+    { id: "executive-02", name: "Formal",         cat: "executive",    desc: "Dark sidebar · Gold" },
+    { id: "creative-01",  name: "Vivid",          cat: "creative",     desc: "Color band · Bold" },
+    { id: "split-01",     name: "Ledger",         cat: "modern",       desc: "Card sections · Teal" },
+    { id: "split-02",     name: "Bracket",        cat: "modern",       desc: "Card sections · Slate" },
+    { id: "split-03",     name: "Corner",         cat: "creative",     desc: "Card sections · Rose" },
+    { id: "split-04",     name: "Frame",          cat: "executive",    desc: "Card sections · Charcoal" },
+    { id: "timeline-01",  name: "Pathway",        cat: "modern",       desc: "Timeline · Teal" },
+    { id: "timeline-02",  name: "Milestone",      cat: "ats",          desc: "Timeline · Charcoal" },
+    { id: "timeline-03",  name: "Journey",        cat: "executive",    desc: "Timeline · Navy" },
+    { id: "combined-01",  name: "All Together",   cat: "student",      desc: "Merged history · Teal" },
+    { id: "combined-02",  name: "One Story",      cat: "student",      desc: "Merged history · Coral" },
+    { id: "combined-03",  name: "Steady Path",    cat: "student",      desc: "Merged history · Blue" },
+    { id: "combined-04",  name: "Groundwork",     cat: "student",      desc: "Merged history · Olive" },
+    { id: "practical-01", name: "Ready to Work",  cat: "student",      desc: "Checklist layout · Teal" },
+    { id: "practical-02", name: "On Call",        cat: "student",      desc: "Checklist layout · Navy" },
+    { id: "practical-03", name: "Hands On",       cat: "student",      desc: "Checklist layout · Charcoal" },
+    { id: "functional-01",name: "Strong Suit",    cat: "career-change",desc: "Skills-grouped · Teal" },
+    { id: "functional-02",name: "New Direction",  cat: "career-change",desc: "Skills-grouped · Slate" },
+    { id: "functional-03",name: "Turning Point",  cat: "career-change",desc: "Skills-grouped · Amber" },
+    { id: "trade-01",     name: "On the Tools",   cat: "trade",        desc: "Credential badges · Steel Blue" },
+    { id: "trade-02",     name: "Certified",      cat: "trade",        desc: "Credential badges · Safety Orange" },
+    { id: "trade-03",     name: "Skilled Hands",  cat: "trade",        desc: "Credential badges · Charcoal" },
+    { id: "starter-01",   name: "Starter Classic",cat: "student",      desc: "Skills bars · Teal" },
+    { id: "starter-02",   name: "Starter Warm",   cat: "student",      desc: "Skills bars · Coral" },
+    { id: "starter-03",   name: "Starter Cool",   cat: "student",      desc: "Skills bars · Blue" },
+    { id: "mono-01",      name: "Stonewood",      cat: "elegant",      desc: "Monogram · Champagne" },
+    { id: "mono-02",      name: "Sagebrook",      cat: "elegant",      desc: "Monogram · Sage" },
+    { id: "mono-03",      name: "Slateview",      cat: "elegant",      desc: "Monogram · Slate Blue" },
+    { id: "facet-01",     name: "Terraline",      cat: "elegant",      desc: "Facet · Terracotta" },
+    { id: "facet-02",     name: "Deepwater",      cat: "elegant",      desc: "Facet · Deep Teal" },
+    { id: "facet-03",     name: "Plumline",       cat: "elegant",      desc: "Facet · Plum" },
+    { id: "facet-04",     name: "Brasswork",      cat: "elegant",      desc: "Facet · Bronze" },
+    { id: "duo-01",       name: "Rosemere",       cat: "elegant",      desc: "Duotone · Dusty Rose" },
+    { id: "duo-02",       name: "Willowgreen",    cat: "elegant",      desc: "Duotone · Muted Sage" },
+    { id: "duo-03",       name: "Warmstone",      cat: "elegant",      desc: "Duotone · Warm Grey" }
+];
+
+const ACCENT_COLORS = [
+    { label: "Teal",     v: "#2F6F63" }, { label: "Navy",     v: "#1B2A4A" },
+    { label: "Slate",    v: "#3B5BA9" }, { label: "Burgundy", v: "#7B2D3E" },
+    { label: "Forest",   v: "#264D3B" }, { label: "Rose",     v: "#C1447E" },
+    { label: "Sienna",   v: "#B2562F" }, { label: "Charcoal", v: "#3D3D3D" }
+];
+const PAPER_COLORS = [
+    "#FAF6EF","#EAEEE1","#F2E8D8","#EAE3DE","#F5E9C8",
+    "#E4EAD8","#E7DFD7","#F3DEDA","#FFFDF9","#F0EDE8"
+];
+
+const SIDEBAR_TYPES = new Set(["personal-info","skills","languages","certificates","references","interests","strengths"]);
+const MAIN_TYPES    = new Set(["experience","education","projects","custom"]);
+
+const BLANK = {
+    "personal-info": () => ({ id: genId("pi"),   label: "", value: "" }),
+    experience:      () => ({ id: genId("exp"),  role: "", company: "", location: "", startDate: "", endDate: "", current: false, bullets: [] }),
+    education:       () => ({ id: genId("edu"),  qualification: "", institution: "", location: "", startDate: "", endDate: "", current: false, notes: "" }),
+    projects:        () => ({ id: genId("prj"),  name: "", url: "", startDate: "", endDate: "", bullets: [] }),
+    custom:          () => ({ id: genId("cus"),  title: "", bullets: [] }),
+    skills:          () => ({ id: genId("skl"),  name: "", level: "" }),
+    languages:       () => ({ id: genId("lng"),  name: "", level: "" }),
+    certificates:    () => ({ id: genId("cert"), name: "" }),
+    references:      () => ({ id: genId("ref"),  name: "", title: "", phone: "", email: "" }),
+    interests:       () => ({ id: genId("int"),  value: "" }),
+    strengths:       () => ({ id: genId("str"),  value: "" })
+};
+
+ const allTemplateIds = TEMPLATE_CONFIGS.map(t => t.id);
+
+    function generateThumbnailSVG(templateId) {
+        const a = getTemplateDefaultColor(templateId);
+        const rr = (x,y,w,h,r,fill,op) =>
+            `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}"${op!=null?` opacity="${op}"`:''}/>`; 
+        const line = (x,y,w,h,fill,op) => rr(x,y,w,h,1,fill,op!=null?op:0.4);
+        const txt = (x,y,fs,fill,content,anchor) =>
+            `<text x="${x}" y="${y}" font-family="sans-serif" font-size="${fs}" fill="${fill}"${anchor?` text-anchor="${anchor}"`:''} font-weight="700">${content}</text>`;
+        let body = '';
+        switch(templateId) {
+            case 'modern-01':
+                body += rr(0,0,100,141,2,'#F8F5EF',null);
+                body += rr(0,0,34,141,0,'#ECEAE2',null);
+                body += rr(33,0,2,141,0,a,null);
+                body += txt(17,22,7,'#222','Jane','middle');
+                body += line(6,26,22,2,'#555',0.5); body += line(6,32,18,2,'#888',0.4); body += line(6,38,20,2,'#888',0.3);
+                for(let i=0;i<4;i++){ body += line(6,48+i*16,22,2,a,0.6); body += line(6,53+i*16,16,2,'#999',0.4); }
+                body += line(38,12,55,6,'#222',0.8); body += rr(38,21,30,3,1,a,0.5);
+                body += line(38,30,55,2,'#999',0.3); body += line(38,35,48,2,'#999',0.25);
+                for(let i=0;i<5;i++){ body += rr(38,42+i*16,55,4,1,a,0.25); body += line(38,49+i*16,45,2,'#999',0.35); body += line(38,53+i*16,38,2,'#999',0.25); }
+                break;
+            case 'modern-02':
+                body += rr(0,0,100,141,2,'#EAE8E0',null);
+                body += rr(0,0,34,141,0,'#D6DBE8',null);
+                body += rr(33,0,2,141,0,a,null);
+                body += txt(17,22,7,'#111','Jane','middle');
+                body += line(6,27,22,2,'#444',0.5); body += line(6,33,18,2,'#666',0.4); body += line(6,39,20,2,'#666',0.3);
+                for(let i=0;i<4;i++){ body += line(6,49+i*16,22,2,a,0.7); body += line(6,54+i*16,16,2,'#888',0.4); }
+                body += line(38,12,55,6,'#222',0.8); body += rr(38,21,30,3,1,a,0.5);
+                body += line(38,30,55,2,'#999',0.3); body += line(38,35,48,2,'#999',0.25);
+                for(let i=0;i<5;i++){ body += rr(38,42+i*16,55,4,1,a,0.25); body += line(38,49+i*16,45,2,'#999',0.35); body += line(38,53+i*16,38,2,'#999',0.25); }
+                break;
+            case 'modern-03':
+                body += rr(0,0,100,141,2,'#F2E8D8',null);
+                body += rr(0,0,100,28,0,a,null);
+                body += txt(50,16,8,'#fff','Jane Mokoena','middle');
+                body += rr(30,21,40,2,1,'rgba(255,255,255,0.4)',null);
+                body += line(10,25,80,1.5,'rgba(255,255,255,0.5)',0.7);
+                for(let i=0;i<6;i++){ body += rr(10,34+i*16,80,4,1,a,0.22); body += line(10,41+i*16,65,2,'#888',0.35); body += line(10,45+i*16,50,2,'#888',0.25); }
+                break;
+            case 'ats-01':
+                body += rr(0,0,100,141,2,'#FAFAFA',null);
+                body += rr(0,0,100,3,0,a,null);
+                body += txt(10,16,9,'#111','Jane Mokoena','start');
+                body += rr(10,19,30,2.5,1,a,0.5); body += line(10,25,80,1,'#111',0.8); body += line(10,30,60,2,'#555',0.4);
+                for(let i=0;i<7;i++){ body += rr(10,36+i*13,50,3,1,'#111',0.15); body += line(10,42+i*13,70,2,'#999',0.35); body += line(10,46+i*13,55,2,'#999',0.25); }
+                break;
+            case 'ats-02':
+                body += rr(0,0,100,141,2,'#FAFAFA',null);
+                body += txt(8,14,8,'#111','Jane Mokoena','start');
+                body += line(8,18,40,2,'#555',0.5);
+                body += line(62,10,32,2,'#888',0.4); body += line(62,14,28,2,'#888',0.3); body += line(62,18,30,2,'#888',0.3);
+                body += line(8,24,84,1.5,'#111',0.9); body += line(8,30,80,2,'#555',0.3);
+                for(let i=0;i<7;i++){ body += rr(8,36+i*13,50,3,1,'#111',0.12); body += line(8,42+i*13,72,2,'#999',0.32); body += line(8,46+i*13,60,2,'#999',0.22); }
+                break;
+            case 'ats-03':
+                body += rr(0,0,100,141,2,'#FDF9F4',null);
+                body += txt(10,12,8,'#2A1F14','Jane Mokoena','start');
+                body += line(10,15,42,2,'#5C4A38',0.5); body += line(10,20,80,1,'#5C4A38',0.6); body += line(10,24,80,1.5,'#BBA',0.4);
+                for(let i=0;i<9;i++){ body += rr(10,28+i*11,45,2.5,0,'#5C4A38',0.12); body += line(10,33+i*11,72,1.5,'#9A8878',0.35); body += line(10,36+i*11,55,1.5,'#9A8878',0.22); }
+                break;
+            case 'ats-04':
+                body += rr(0,0,100,141,2,'#FAFAFA',null);
+                body += txt(10,12,8,'#111','JANE MOKOENA','start');
+                body += line(10,16,45,1.5,'#555',0.5); body += line(10,21,80,1,'#111',0.5);
+                for(let i=0;i<6;i++){ body += rr(8,29+i*17,3,8,0,a,0.8); body += rr(13,29+i*17,30,4,1,a,0.15); body += line(8,37+i*17,72,2,'#999',0.35); body += line(8,41+i*17,55,2,'#999',0.25); }
+                break;
+            case 'executive-01':
+                body += rr(0,0,100,141,2,'#FAFAFA',null);
+                body += rr(0,0,100,34,0,'#1B2A4A',null);
+                body += txt(50,18,8,'#fff','Jane Mokoena','middle');
+                body += rr(35,22,30,1.5,0,'rgba(255,255,255,0.4)',null); body += line(20,27,60,1,'rgba(255,255,255,0.5)',0.7); body += line(10,30,80,1,'rgba(255,255,255,0.2)',0.5);
+                for(let i=0;i<6;i++){ body += rr(10,40+i*15,80,4,1,'#1B2A4A',0.12); body += line(10,47+i*15,65,2,'#999',0.35); body += line(10,51+i*15,50,2,'#999',0.25); }
+                break;
+            case 'executive-02':
+                body += rr(0,0,100,141,2,'#FAFAFA',null);
+                body += rr(0,0,36,141,0,'#1B2A4A',null);
+                body += rr(35,0,3,141,0,a,null);
+                body += txt(18,22,7,'#fff','Jane','middle');
+                body += line(5,26,26,1.5,a,0.8); body += line(5,32,22,2,'rgba(255,255,255,0.5)',0.5); body += line(5,37,18,1.5,'rgba(255,255,255,0.4)',0.4);
+                for(let i=0;i<4;i++){ body += line(5,47+i*17,24,2,a,0.5); body += line(5,52+i*17,18,1.5,'rgba(255,255,255,0.3)',0.5); }
+                body += line(40,10,54,6,'#222',0.7); body += rr(40,20,28,3,1,a,0.5); body += rr(40,27,54,1.5,0,'#1B2A4A',0.7);
+                for(let i=0;i<5;i++){ body += rr(40,33+i*16,54,4,1,'#1B2A4A',0.1); body += line(40,40+i*16,44,2,'#999',0.35); body += line(40,44+i*16,38,2,'#999',0.25); }
+                break;
+            case 'creative-01':
+                body += rr(0,0,100,141,2,'#F8F5F0',null);
+                body += rr(0,0,100,26,0,a,null);
+                body += txt(50,15,9,'#fff','CREATIVE CV','middle');
+                body += line(15,22,70,1,'rgba(255,255,255,0.4)',0.7);
+                body += rr(0,26,35,115,0,'#F0EDE8',null); body += rr(33,26,2,115,0,a,null);
+                for(let i=0;i<5;i++){ body += line(5,33+i*18,25,2,a,0.5); body += line(5,38+i*18,18,2,'#888',0.35); }
+                for(let i=0;i<5;i++){ body += rr(38,32+i*19,55,4,1,a,0.2); body += line(38,39+i*19,48,2,'#888',0.35); body += line(38,43+i*19,40,2,'#888',0.25); }
+                break;
+            case 'split-01':
+                body += rr(0,0,100,141,2,'#EEF1F5',null);
+                body += txt(6,12,7,'#222','Jane Mokoena','start');
+                body += rr(6,15,40,1.5,0,a,0.8); body += line(6,20,60,1,'#888',0.3);
+                for(let i=0;i<3;i++){ body += rr(6,26+i*24,62,18,3,'#fff',1); body += rr(8,28+i*24,2,14,1,a,1); body += line(13,31+i*24,40,3,'#222',0.6); body += line(13,36+i*24,35,2,'#888',0.4); body += line(13,40+i*24,30,2,'#888',0.3); }
+                body += rr(72,0,28,141,0,'#fff',null); body += rr(71,0,1,141,0,'#E4E7EB',null);
+                for(let i=0;i<6;i++){ body += rr(75,8+i*16,3,3,2,a,0.8); body += line(80,10+i*16,16,2,'#888',0.5); body += line(80,15+i*16,12,2,'#aaa',0.3); }
+                break;
+            case 'split-02':
+                body += rr(0,0,100,141,2,'#ECF0F4',null);
+                body += txt(6,12,7,'#222','Jane Mokoena','start');
+                body += rr(6,15,40,1.5,0,a,0.8); body += line(6,20,60,1,'#888',0.3);
+                for(let i=0;i<3;i++){ body += rr(6,26+i*24,62,18,3,'#fff',1); body += rr(8,28+i*24,2,14,1,a,1); body += line(13,31+i*24,38,3,'#222',0.6); body += line(13,36+i*24,30,2,'#888',0.4); body += line(13,40+i*24,26,2,'#888',0.3); }
+                body += rr(72,0,28,141,0,'#fff',null); body += rr(71,0,1,141,0,'#D0D8E8',null);
+                for(let i=0;i<6;i++){ body += rr(75,8+i*16,3,3,2,a,0.8); body += line(80,10+i*16,16,2,'#888',0.5); }
+                break;
+            case 'split-03':
+                body += rr(0,0,100,141,2,'#F5EEED',null);
+                body += txt(6,12,7,'#222','Jane Mokoena','start');
+                body += rr(6,15,40,1.5,0,a,0.8); body += line(6,20,60,1,'#ccc',0.5);
+                for(let i=0;i<3;i++){ body += rr(6,26+i*24,62,18,3,'#fff',1); body += rr(8,28+i*24,2,14,1,a,1); body += line(13,31+i*24,36,3,'#222',0.6); body += line(13,36+i*24,28,2,'#888',0.4); body += line(13,40+i*24,24,2,'#888',0.3); }
+                body += rr(72,0,28,141,0,'#fff',null); body += rr(71,0,1,141,0,'#E8D0CF',null);
+                for(let i=0;i<6;i++){ body += rr(75,8+i*16,3,3,2,a,0.8); body += line(80,10+i*16,16,2,'#888',0.5); }
+                break;
+            case 'split-04':
+                body += rr(0,0,100,141,2,'#EEECEA',null);
+                body += txt(6,12,7,'#222','Jane Mokoena','start');
+                body += rr(6,15,40,1.5,0,a,0.8); body += line(6,20,60,1,'#aaa',0.5);
+                for(let i=0;i<3;i++){ body += rr(6,26+i*24,62,18,3,'#fff',1); body += rr(8,28+i*24,2,14,1,a,1); body += line(13,31+i*24,34,3,'#222',0.6); body += line(13,36+i*24,26,2,'#888',0.4); }
+                body += rr(72,0,28,141,0,'#fff',null); body += rr(71,0,1,141,0,'#CCC',null);
+                for(let i=0;i<6;i++){ body += rr(75,8+i*16,3,3,2,a,0.8); body += line(80,10+i*16,14,2,'#888',0.5); }
+                break;
+            case 'timeline-01':
+                body += rr(0,0,100,141,2,'#FAFCFB',null);
+                body += txt(10,12,8,'#1B2A4A','Jane Mokoena','start');
+                body += rr(10,15,28,2.5,1,a,0.7); body += line(10,21,80,1,a,0.4);
+                body += rr(16,28,2,105,0,a,0.3);
+                for(let i=0;i<5;i++){ body += rr(13,30+i*20,8,8,4,a,1); body += line(24,33+i*20,60,3,'#222',0.5); body += line(24,39+i*20,50,2,'#888',0.35); body += line(24,43+i*20,42,2,'#888',0.25); }
+                break;
+            case 'timeline-02':
+                body += rr(0,0,100,141,2,'#F9F9F9',null);
+                body += txt(10,12,8,'#222','Jane Mokoena','start');
+                body += rr(10,15,28,2.5,1,a,0.7); body += line(10,21,80,1,a,0.4);
+                body += rr(16,28,2,105,0,a,0.3);
+                for(let i=0;i<5;i++){ body += rr(12,30+i*20,10,10,5,a,0.9); body += rr(14,32+i*20,6,6,3,'#F9F9F9',1); body += line(24,33+i*20,58,3,'#333',0.5); body += line(24,39+i*20,48,2,'#888',0.35); body += line(24,43+i*20,40,2,'#888',0.25); }
+                break;
+            case 'timeline-03':
+                body += rr(0,0,100,141,2,'#F5F7FA',null);
+                body += txt(10,12,8,'#1B2A4A','Jane Mokoena','start');
+                body += rr(10,15,28,2.5,1,a,0.7); body += line(10,21,80,1,a,0.5);
+                body += rr(16,28,2,105,0,a,0.25);
+                for(let i=0;i<5;i++){ body += rr(12,30+i*20,8,8,4,'#fff',1); body += rr(12,30+i*20,8,8,4,a,0.8); body += rr(14,32+i*20,4,4,2,'#fff',1); body += line(24,33+i*20,62,3,'#1B2A4A',0.4); body += line(24,39+i*20,52,2,'#888',0.35); body += line(24,43+i*20,44,2,'#888',0.25); }
+                break;
+            case 'combined-01':
+                body += rr(0,0,100,141,2,'#FAFCFB',null);
+                body += txt(10,10,7,'#222','Jane Mokoena','start'); body += rr(10,13,28,2,1,a,0.6); body += line(10,18,80,1,'#ccc',0.6);
+                for(let i=0;i<4;i++){ body += rr(10,23+i*26,20,5,3,a,0.8); body += line(32,25+i*26,12,3,'#888',0.3); body += line(10,31+i*26,70,2.5,'#222',0.5); body += line(10,36+i*26,60,2,'#888',0.35); body += line(10,40+i*26,50,2,'#888',0.25); }
+                break;
+            case 'combined-02':
+                body += rr(0,0,100,141,2,'#FDF8F5',null);
+                body += txt(10,10,7,'#222','Jane Mokoena','start'); body += rr(10,13,28,2,1,a,0.6); body += line(10,18,80,1,'#ddd',0.6);
+                for(let i=0;i<4;i++){ body += rr(10,23+i*26,22,5,3,a,0.8); body += line(34,25+i*26,10,3,'#888',0.3); body += line(10,31+i*26,72,2.5,'#222',0.5); body += line(10,36+i*26,60,2,'#888',0.35); body += line(10,40+i*26,52,2,'#888',0.25); }
+                break;
+            case 'combined-03':
+                body += rr(0,0,100,141,2,'#F5F8FC',null);
+                body += txt(10,10,7,'#222','Jane Mokoena','start'); body += rr(10,13,28,2,1,a,0.6); body += line(10,18,80,1,'#cce',0.5);
+                for(let i=0;i<4;i++){ body += rr(10,23+i*26,18,5,3,a,0.8); body += line(30,25+i*26,14,3,'#88a',0.3); body += line(10,31+i*26,72,2.5,'#1B2A4A',0.5); body += line(10,36+i*26,60,2,'#888',0.35); body += line(10,40+i*26,52,2,'#888',0.25); }
+                break;
+            case 'combined-04':
+                body += rr(0,0,100,141,2,'#F8F9F4',null);
+                body += txt(10,10,7,'#333','Jane Mokoena','start'); body += rr(10,13,28,2,1,a,0.6); body += line(10,18,80,1,'#cdc',0.5);
+                for(let i=0;i<4;i++){ body += rr(10,23+i*26,16,5,3,a,0.8); body += line(28,25+i*26,14,3,'#8a8',0.3); body += line(10,31+i*26,72,2.5,'#333',0.5); body += line(10,36+i*26,60,2,'#888',0.35); body += line(10,40+i*26,52,2,'#888',0.25); }
+                break;
+            case 'practical-01':
+                body += rr(0,0,100,141,2,'#FAFCFB',null);
+                body += txt(10,10,7,'#222','Jane Mokoena','start'); body += rr(10,13,22,2,1,a,0.7); body += line(10,18,80,1,a,0.3);
+                body += txt(10,26,6,a,'AVAILABILITY','start');
+                for(let i=0;i<2;i++) for(let j=0;j<2;j++){ body += rr(10+j*45,30+i*12,7,7,4,a,0.8); body += line(20+j*45,33+i*12,28,2,'#222',0.5); body += line(20+j*45,37+i*12,20,2,'#888',0.35); }
+                body += line(10,58,80,1,'#ddd',0.5);
+                for(let i=0;i<4;i++){ body += rr(10,63+i*18,4,11,2,a,0.8); body += line(17,66+i*18,60,3,'#222',0.5); body += line(17,72+i*18,50,2,'#888',0.35); }
+                break;
+            case 'practical-02':
+                body += rr(0,0,100,141,2,'#F5F7FA',null);
+                body += txt(10,10,7,'#1B2A4A','Jane Mokoena','start'); body += rr(10,13,22,2,1,a,0.7); body += line(10,18,80,1,a,0.3);
+                body += txt(10,26,6,a,'AVAILABILITY','start');
+                for(let i=0;i<2;i++) for(let j=0;j<2;j++){ body += rr(10+j*45,30+i*12,7,7,4,a,0.8); body += line(20+j*45,33+i*12,26,2,'#1B2A4A',0.5); body += line(20+j*45,37+i*12,18,2,'#888',0.35); }
+                body += line(10,58,80,1,'#ddd',0.5);
+                for(let i=0;i<4;i++){ body += rr(10,63+i*18,4,11,2,a,0.8); body += line(17,66+i*18,62,3,'#1B2A4A',0.5); body += line(17,72+i*18,50,2,'#888',0.35); }
+                break;
+            case 'practical-03':
+                body += rr(0,0,100,141,2,'#F7F7F7',null);
+                body += txt(10,10,7,'#222','Jane Mokoena','start'); body += rr(10,13,22,2,1,a,0.7); body += line(10,18,80,1,a,0.3);
+                body += txt(10,26,6,'#555','AVAILABILITY','start');
+                for(let i=0;i<2;i++) for(let j=0;j<2;j++){ body += rr(10+j*45,30+i*12,7,7,4,a,0.8); body += line(20+j*45,33+i*12,24,2,'#333',0.5); body += line(20+j*45,37+i*12,16,2,'#888',0.35); }
+                body += line(10,58,80,1,'#ccc',0.5);
+                for(let i=0;i<4;i++){ body += rr(10,63+i*18,4,11,2,a,0.8); body += line(17,66+i*18,62,3,'#333',0.5); body += line(17,72+i*18,50,2,'#888',0.35); }
+                break;
+            case 'functional-01':
+                body += rr(0,0,100,141,2,'#FAFCFB',null);
+                body += txt(10,10,7,'#222','Jane Mokoena','start'); body += rr(10,13,22,2,1,a,0.7); body += rr(10,17,80,1.5,0,a,0.3);
+                for(let i=0;i<3;i++){ body += rr(10,23+i*22,4,14,2,a,0.9); body += line(17,26+i*22,40,3,'#222',0.6); body += line(17,31+i*22,60,2,'#888',0.35); body += line(17,35+i*22,50,2,'#888',0.25); }
+                body += line(10,93,80,1,'#ccc',0.5); body += txt(10,101,6,a,'WORK HISTORY','start');
+                for(let i=0;i<2;i++){ body += line(10,107+i*13,45,2.5,'#222',0.5); body += line(10,112+i*13,35,2,'#888',0.35); }
+                break;
+            case 'functional-02':
+                body += rr(0,0,100,141,2,'#F5F7FA',null);
+                body += txt(10,10,7,'#1B2A4A','Jane Mokoena','start'); body += rr(10,13,22,2,1,a,0.7); body += rr(10,17,80,1.5,0,a,0.3);
+                for(let i=0;i<3;i++){ body += rr(10,23+i*22,4,14,2,a,0.9); body += line(17,26+i*22,38,3,'#1B2A4A',0.6); body += line(17,31+i*22,62,2,'#888',0.35); body += line(17,35+i*22,52,2,'#888',0.25); }
+                body += line(10,93,80,1,'#bbd',0.5); body += txt(10,101,6,a,'WORK HISTORY','start');
+                for(let i=0;i<2;i++){ body += line(10,107+i*13,48,2.5,'#1B2A4A',0.5); body += line(10,112+i*13,38,2,'#888',0.35); }
+                break;
+            case 'functional-03':
+                body += rr(0,0,100,141,2,'#FDFAF5',null);
+                body += txt(10,10,7,'#2A1F08','Jane Mokoena','start'); body += rr(10,13,22,2,1,a,0.7); body += rr(10,17,80,1.5,0,a,0.3);
+                for(let i=0;i<3;i++){ body += rr(10,23+i*22,4,14,2,a,0.9); body += line(17,26+i*22,36,3,'#2A1F08',0.6); body += line(17,31+i*22,62,2,'#888',0.35); body += line(17,35+i*22,50,2,'#888',0.25); }
+                body += line(10,93,80,1,'#e8d8a0',0.6); body += txt(10,101,6,a,'WORK HISTORY','start');
+                for(let i=0;i<2;i++){ body += line(10,107+i*13,44,2.5,'#2A1F08',0.5); body += line(10,112+i*13,36,2,'#888',0.35); }
+                break;
+            case 'trade-01':
+                body += rr(0,0,100,141,2,'#F5F7F8',null); body += rr(0,0,100,26,0,'#1B3A4B',null);
+                body += txt(10,15,8,'#fff','Thabo Sekgobela','start'); body += line(10,21,50,2,'#8DB8D0',0.7);
+                for(let i=0;i<3;i++){ body += rr(8+i*30,30,24,9,5,'#F0F4F8',1); body += rr(8+i*30,30,9,9,5,a,1); }
+                body += txt(8,48,6,a,'TOOLS','start');
+                for(let i=0;i<5;i++) body += rr(8+i*18,52,14,7,4,'#E4E9EE',1);
+                body += txt(8,68,6,a,'EXPERIENCE','start');
+                for(let i=0;i<3;i++){ body += rr(8,72+i*20,84,14,3,'#F7F9FB',1); body += rr(8,72+i*20,3,14,1,a,1); body += line(14,76+i*20,50,3,'#222',0.6); body += line(14,81+i*20,42,2,'#888',0.35); }
+                break;
+            case 'trade-02':
+                body += rr(0,0,100,141,2,'#FDF8F4',null); body += rr(0,0,100,17,0,'#7A3A1B',null);
+                body += txt(6,11,7,'#fff','Thabo Sekgobela','start'); body += line(60,11,34,1.5,'#F5C9A8',0.7);
+                body += rr(0,17,39,124,0,'#F0E4DC',null); body += rr(38,17,1.5,124,0,'#E0C8B8',null);
+                body += txt(6,27,5.5,a,'CREDENTIALS','start');
+                for(let i=0;i<3;i++){ body += rr(6,31+i*10,5,5,2.5,a,0.9); body += line(13,35+i*10,26,2,'#5C4A3E',0.5); }
+                body += txt(6,68,5.5,a,'TOOLS','start');
+                for(let i=0;i<4;i++) body += rr(6,72+i*9,30,6,3,'#FFF3EE',1);
+                body += txt(42,27,6,'#2A1808','EXPERIENCE','start');
+                for(let i=0;i<3;i++){ body += rr(42,31+i*20,52,15,3,'#FBF5F0',1); body += rr(42,31+i*20,3,15,1,a,1); body += line(48,35+i*20,38,3,'#222',0.6); body += line(48,40+i*20,32,2,'#888',0.35); }
+                break;
+            case 'trade-03':
+                body += rr(0,0,100,141,2,'#F7F7F7',null); body += rr(0,0,100,26,0,'#2C2C2C',null);
+                body += txt(10,15,8,'#fff','Thabo Sekgobela','start'); body += line(10,21,50,2,'#B0B0B0',0.7);
+                for(let i=0;i<3;i++){ body += rr(8+i*30,30,24,9,5,'#F2F2F2',1); body += rr(8+i*30,30,9,9,5,a,1); }
+                body += txt(8,48,6,a,'TOOLS','start');
+                for(let i=0;i<5;i++) body += rr(8+i*18,52,14,7,4,'#E8E8E8',1);
+                body += txt(8,68,6,a,'EXPERIENCE','start');
+                for(let i=0;i<3;i++){ body += rr(8,72+i*20,84,14,3,'#F5F5F5',1); body += rr(8,72+i*20,3,14,1,a,1); body += line(14,76+i*20,50,3,'#333',0.6); body += line(14,81+i*20,42,2,'#888',0.35); }
+                break;
+            case 'starter-01':
+                body += rr(0,0,100,141,2,'#FAFCFB',null); body += rr(0,0,100,26,0,a,null);
+                body += rr(8,5,16,16,8,'rgba(255,255,255,0.25)',null);
+                body += txt(30,14,8,'#fff','Refilwe','start'); body += line(30,19,40,2,'rgba(255,255,255,0.7)',0.8);
+                body += rr(0,26,100,7,0,'#fff',null); body += line(8,30,80,2,'#aaa',0.4);
+                body += txt(8,42,6,a,'SKILLS','start');
+                for(let i=0;i<5;i++){ const w=[72,58,85,45,65][i]; body += line(8,48+i*12,30,2,'#444',0.5); body += rr(42,46+i*12,50,3,2,'#E8F0EE',1); body += rr(42,46+i*12,w/2,3,2,a,0.8); }
+                body += txt(8,108,6,a,'EXPERIENCE','start');
+                for(let i=0;i<2;i++){ body += line(8,114+i*13,60,3,'#222',0.5); body += line(8,119+i*13,50,2,'#888',0.35); }
+                break;
+            case 'starter-02':
+                body += rr(0,0,100,141,2,'#FDF8F5',null); body += rr(0,0,100,26,0,a,null);
+                body += rr(8,5,16,16,8,'rgba(255,255,255,0.25)',null);
+                body += txt(30,14,8,'#fff','Refilwe','start'); body += line(30,19,40,2,'rgba(255,255,255,0.7)',0.8);
+                body += rr(0,26,100,7,0,'#fff',null); body += line(8,30,80,2,'#ccc',0.4);
+                body += txt(8,42,6,a,'SKILLS','start');
+                for(let i=0;i<5;i++){ const w=[68,55,82,48,60][i]; body += line(8,48+i*12,30,2,'#444',0.5); body += rr(42,46+i*12,50,3,2,'#F5E8E4',1); body += rr(42,46+i*12,w/2,3,2,a,0.8); }
+                body += txt(8,108,6,a,'EXPERIENCE','start');
+                for(let i=0;i<2;i++){ body += line(8,114+i*13,60,3,'#222',0.5); body += line(8,119+i*13,50,2,'#888',0.35); }
+                break;
+            case 'starter-03':
+                body += rr(0,0,100,141,2,'#F5F8FC',null); body += rr(0,0,100,26,0,a,null);
+                body += rr(8,5,16,16,8,'rgba(255,255,255,0.25)',null);
+                body += txt(30,14,8,'#fff','Refilwe','start'); body += line(30,19,40,2,'rgba(255,255,255,0.7)',0.8);
+                body += rr(0,26,100,7,0,'#fff',null); body += line(8,30,80,2,'#bbd',0.4);
+                body += txt(8,42,6,a,'SKILLS','start');
+                for(let i=0;i<5;i++){ const w=[75,52,88,42,68][i]; body += line(8,48+i*12,30,2,'#1B2A4A',0.5); body += rr(42,46+i*12,50,3,2,'#E4EAF5',1); body += rr(42,46+i*12,w/2,3,2,a,0.8); }
+                body += txt(8,108,6,a,'EXPERIENCE','start');
+                for(let i=0;i<2;i++){ body += line(8,114+i*13,60,3,'#1B2A4A',0.5); body += line(8,119+i*13,50,2,'#888',0.35); }
+                break;
+            case 'mono-01':
+                body += rr(0,0,100,141,2,'#FDFCF8',null); body += rr(0,0,100,48,0,'#F5F0EA',null);
+                body += rr(35,6,30,30,15,a,0.9); body += txt(50,25,10,'#fff','JM','middle');
+                body += txt(50,38,7,'#2A2520','Jane Mokoena','middle'); body += line(20,43,60,1,'#E4DFD8',0.7);
+                for(let i=0;i<4;i++){ body += line(8,54+i*18,38,3,a,0.2); body += line(8,60+i*18,32,2,'#888',0.35); body += line(54,54+i*18,38,3,a,0.2); body += line(54,60+i*18,32,2,'#888',0.35); }
+                break;
+            case 'mono-02':
+                body += rr(0,0,100,141,2,'#FDFCF8',null); body += rr(0,0,100,48,0,'#F0F4EE',null);
+                body += rr(35,6,30,30,15,a,0.9); body += txt(50,25,10,'#fff','JM','middle');
+                body += txt(50,38,7,'#2A3020','Jane Mokoena','middle'); body += line(20,43,60,1,'#D8E0D4',0.7);
+                for(let i=0;i<4;i++){ body += line(8,54+i*18,38,3,a,0.25); body += line(8,60+i*18,32,2,'#888',0.35); body += line(54,54+i*18,38,3,a,0.25); body += line(54,60+i*18,32,2,'#888',0.35); }
+                break;
+            case 'mono-03':
+                body += rr(0,0,100,141,2,'#FDFCF8',null); body += rr(0,0,100,48,0,'#EEF1F8',null);
+                body += rr(35,6,30,30,15,a,0.9); body += txt(50,25,10,'#fff','JM','middle');
+                body += txt(50,38,7,'#20283A','Jane Mokoena','middle'); body += line(20,43,60,1,'#D4D8E8',0.7);
+                for(let i=0;i<4;i++){ body += line(8,54+i*18,38,3,a,0.25); body += line(8,60+i*18,32,2,'#888',0.35); body += line(54,54+i*18,38,3,a,0.25); body += line(54,60+i*18,32,2,'#888',0.35); }
+                break;
+            case 'facet-01':
+                body += rr(0,0,100,141,2,'#fff',null); body += rr(0,0,30,141,0,a,null);
+                body += rr(8,6,14,14,7,'rgba(255,255,255,0.2)',null);
+                body += txt(15,26,6,'rgba(255,255,255,0.8)','Contact','middle');
+                for(let i=0;i<5;i++) body += line(4,32+i*10,22,2,'rgba(255,255,255,0.4)',0.7);
+                body += txt(15,88,6,'rgba(255,255,255,0.8)','Skills','middle');
+                for(let i=0;i<4;i++) body += line(4,94+i*9,22,2,'rgba(255,255,255,0.35)',0.7);
+                body += txt(34,14,8,'#222','Jane','start'); body += rr(34,17,22,2.5,1,a,0.5);
+                for(let i=0;i<5;i++){ body += rr(34,25+i*20,60,4,1,a,0.18); body += line(34,32+i*20,55,2,'#888',0.35); body += line(34,36+i*20,48,2,'#888',0.25); }
+                break;
+            case 'facet-02':
+                body += rr(0,0,100,141,2,'#fff',null); body += rr(0,0,30,141,0,a,null);
+                body += rr(8,6,14,14,7,'rgba(255,255,255,0.2)',null);
+                for(let i=0;i<5;i++) body += line(4,24+i*10,22,2,'rgba(255,255,255,0.4)',0.7);
+                for(let i=0;i<4;i++) body += line(4,84+i*9,22,2,'rgba(255,255,255,0.35)',0.7);
+                body += txt(34,14,8,'#111','Jane','start'); body += rr(34,17,22,2.5,1,a,0.5);
+                for(let i=0;i<5;i++){ body += rr(34,25+i*20,60,4,1,a,0.18); body += line(34,32+i*20,55,2,'#888',0.35); body += line(34,36+i*20,48,2,'#888',0.25); }
+                break;
+            case 'facet-03':
+                body += rr(0,0,100,141,2,'#fff',null); body += rr(0,0,30,141,0,a,null);
+                body += rr(8,6,14,14,7,'rgba(255,255,255,0.2)',null);
+                for(let i=0;i<5;i++) body += line(4,24+i*10,22,2,'rgba(255,255,255,0.4)',0.7);
+                for(let i=0;i<4;i++) body += line(4,84+i*9,22,2,'rgba(255,255,255,0.35)',0.7);
+                body += txt(34,14,8,'#2A102A','Jane','start'); body += rr(34,17,22,2.5,1,a,0.5);
+                for(let i=0;i<5;i++){ body += rr(34,25+i*20,60,4,1,a,0.18); body += line(34,32+i*20,55,2,'#888',0.35); body += line(34,36+i*20,48,2,'#888',0.25); }
+                break;
+            case 'facet-04':
+                body += rr(0,0,100,141,2,'#fff',null); body += rr(0,0,30,141,0,a,null);
+                body += rr(8,6,14,14,7,'rgba(255,255,255,0.2)',null);
+                for(let i=0;i<5;i++) body += line(4,24+i*10,22,2,'rgba(255,255,255,0.4)',0.7);
+                for(let i=0;i<4;i++) body += line(4,84+i*9,22,2,'rgba(255,255,255,0.35)',0.7);
+                body += txt(34,14,8,'#2A1E08','Jane','start'); body += rr(34,17,22,2.5,1,a,0.5);
+                for(let i=0;i<5;i++){ body += rr(34,25+i*20,60,4,1,a,0.18); body += line(34,32+i*20,55,2,'#888',0.35); body += line(34,36+i*20,48,2,'#888',0.25); }
+                break;
+            case 'duo-01':
+                body += rr(0,0,100,141,2,'#FCFBF9',null); body += rr(0,0,30,141,0,'#F0EDE8',null); body += rr(29,0,1.5,141,0,'#DDD8D2',null);
+                body += txt(15,18,7,'#2A2520','Jane','middle'); body += rr(5,21,20,1.5,0,a,0.7);
+                body += line(5,26,20,2,'#888',0.4); body += line(5,31,18,2,'#888',0.35); body += line(5,36,20,2,'#888',0.3);
+                for(let i=0;i<4;i++){ body += line(5,46+i*16,22,2,a,0.5); body += line(5,51+i*16,16,2,'#888',0.35); body += line(5,55+i*16,14,2,'#888',0.25); }
+                body += txt(34,12,7,'#2A2520','Experience','start'); body += rr(34,15,55,1.5,0,a,0.6);
+                for(let i=0;i<4;i++){ body += line(34,22+i*26,58,3,'#222',0.5); body += line(34,28+i*26,50,2,'#888',0.35); body += line(34,33+i*26,44,2,'#888',0.25); body += line(34,38+i*26,38,2,'#888',0.2); }
+                break;
+            case 'duo-02':
+                body += rr(0,0,100,141,2,'#FCFBF9',null); body += rr(0,0,30,141,0,'#EEF0EB',null); body += rr(29,0,1.5,141,0,'#CDD0C8',null);
+                body += txt(15,18,7,'#2A3020','Jane','middle'); body += rr(5,21,20,1.5,0,a,0.7);
+                body += line(5,26,20,2,'#666',0.4); body += line(5,31,18,2,'#666',0.35);
+                for(let i=0;i<4;i++){ body += line(5,41+i*16,22,2,a,0.5); body += line(5,46+i*16,16,2,'#888',0.35); }
+                body += txt(34,12,7,'#2A3020','Experience','start'); body += rr(34,15,55,1.5,0,a,0.6);
+                for(let i=0;i<4;i++){ body += line(34,22+i*26,58,3,'#2A3020',0.5); body += line(34,28+i*26,50,2,'#888',0.35); body += line(34,33+i*26,44,2,'#888',0.25); body += line(34,38+i*26,38,2,'#888',0.2); }
+                break;
+            case 'duo-03':
+                body += rr(0,0,100,141,2,'#FCFBF9',null); body += rr(0,0,30,141,0,'#EEECEA',null); body += rr(29,0,1.5,141,0,'#CCC9C6',null);
+                body += txt(15,18,7,'#2A2520','Jane','middle'); body += rr(5,21,20,1.5,0,a,0.7);
+                body += line(5,26,20,2,'#777',0.4); body += line(5,31,18,2,'#777',0.35);
+                for(let i=0;i<4;i++){ body += line(5,41+i*16,22,2,a,0.5); body += line(5,46+i*16,16,2,'#888',0.35); }
+                body += txt(34,12,7,'#2A2520','Experience','start'); body += rr(34,15,55,1.5,0,a,0.6);
+                for(let i=0;i<4;i++){ body += line(34,22+i*26,58,3,'#333',0.5); body += line(34,28+i*26,50,2,'#888',0.35); body += line(34,33+i*26,44,2,'#888',0.25); body += line(34,38+i*26,38,2,'#888',0.2); }
+                break;
+            default:
+                body += rr(0,0,100,141,2,'#F8F8F8',null); body += rr(0,0,100,6,0,a,null);
+                body += txt(10,18,7,'#222',templateId,'start');
+                for(let i=0;i<6;i++) body += line(10,28+i*16,80,3,'#999',0.3);
+        }
+        return `<svg viewBox="0 0 100 141" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+    }
+
+    const SVGS = {};
+    allTemplateIds.forEach(id => { SVGS[id] = generateThumbnailSVG(id); });
+
+// ---- TEMPLATE FETCHER ----
+const TEMPLATE_IDS = TEMPLATE_CONFIGS.map(t => t.id);
+const TEMPLATE_BASE = './templates/'; 
+const templateCache = {};
+
+async function fetchAllTemplates() {
+    const promises = TEMPLATE_IDS.map(async (id) => {
+        try {
+            const response = await fetch(`${TEMPLATE_BASE}template-${id}.html`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const html = await response.text();
+            templateCache[id] = html;
+        } catch (error) {
+            console.error(`Failed to load template ${id}:`, error);
+            templateCache[id] = `<p class="error">Template not found</p>`;
+        }
+    });
+    await Promise.all(promises);
+    console.log('✅ All templates loaded.');
+}
+
+function renderTemplate(templateId, data) {
+    let html = templateCache[templateId] || `<p class="error">Template ${templateId} not loaded.</p>`;
+
+    const p = data.personalDetails;
+    html = html.replace(/\{\{fullName\}\}/g, escHtml(p.fullName));
+    html = html.replace(/\{\{jobTitle\}\}/g, escHtml(p.jobTitle));
+    html = html.replace(/\{\{summary\}\}/g, escHtml(p.summary));
+    html = html.replace(/\{\{email\}\}/g, escHtml(p.email));
+    html = html.replace(/\{\{phone\}\}/g, escHtml(p.phone));
+    html = html.replace(/\{\{location\}\}/g, escHtml(p.location));
+    html = html.replace(/\{\{photo\}\}/g, p.photo ? `<img src="${p.photo}" alt="Photo">` : '');
+    html = html.replace(/\{\{contactList\}\}/g, contactListHtml(p));
+    html = html.replace(/\{\{atsContactLine\}\}/g, atsContactLine(p));
+
+
+    const visibleSections = data.sections.filter(s => s.visible).sort((a,b) => a.order - b.order);
+    let sectionsHtml = '';
+    for (const sec of visibleSections) {
+        
+    }
+    html = html.replace(/\{\{sections\}\}/g, sectionsHtml);
+
+    return html;
+}
+   function renderTemplateContent(data, tid) {
+    if (tid==='executive-02')      return renderExecutive02(data);
+    if (tid.startsWith('modern'))  return renderModern(data, tid);
+    if (tid.startsWith('ats'))     return renderAts(data, tid);
+    if (tid.startsWith('executive'))return renderExecutive(data, tid);
+    if (tid.startsWith('creative'))return renderCreative(data);
+    if (tid.startsWith('split'))   return renderSplit(data, tid);
+    if (tid.startsWith('timeline'))return renderTimeline(data, tid);
+    if (tid.startsWith('starter')) return renderStarter(data, tid);
+    if (tid.startsWith('combined'))return renderCombined(data, tid);
+    if (tid.startsWith('practical'))return renderPractical(data, tid);
+    if (tid.startsWith('functional'))return renderFunctional(data, tid);
+    if (tid.startsWith('trade'))   return renderTrade(data, tid);
+    if (tid.startsWith('mono'))    return renderMonogram(data, tid);
+    if (tid.startsWith('facet'))   return renderFacet(data, tid);
+    if (tid.startsWith('duo'))     return renderDuotone(data, tid);
+    return renderModern(data, tid);
+}
+const SIDEBAR_TEMPLATE_IDS = new Set([
+        'modern-01','modern-02','executive-02','creative-01',
+        'facet-01','facet-02','facet-03','facet-04',
+        'duo-01','duo-02','duo-03'
+    ]);
+
+function wrapMain(title,inner){ return `<div class="main-section"><p class="main-label">${escHtml(title)}</p>${inner||`<p class="empty-note">No entries yet.</p>`}</div>`; }
+    function wrapSide(title,inner){ return `<div class="side-section"><p class="side-label">${escHtml(title)}</p>${inner||`<p class="empty-note">None added.</p>`}</div>`; }
+    function wrapMain(title,inner){ return `<div class="main-section"><p class="main-label">${escHtml(title)}</p>${inner||`<p class="empty-note">No entries yet.</p>`}</div>`; }
+    function bareContent(inner){ return inner || `<p class="empty-note">No entries yet.</p>`; }
+
+    const SR = {
+        experience(s){ const h=s.items.map(it=>`<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location?` · ${escHtml(it.location)}`:""}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,it.current)}</span></div>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join(""); return wrapMain(s.title,h); },
+        education(s){ const h=s.items.map(it=>`<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.qualification)}</p><p class="entry-sub">${escHtml(it.institution)}${it.location?` · ${escHtml(it.location)}`:""}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,it.current)}</span></div>${it.notes?`<ul><li>${escHtml(it.notes)}</li></ul>`:""}</div>`).join(""); return wrapMain(s.title,h); },
+        projects(s){ const h=s.items.map(it=>`<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.name)}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,false)}</span></div>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join(""); return wrapMain(s.title,h); },
+        custom(s){ const h=s.items.map(it=>`<div class="entry"><p class="entry-title">${escHtml(it.title||"")}</p>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join(""); return wrapMain(s.title,h); },
+        "personal-info"(s){ const h=s.items.map(it=>`<div class="side-item">${escHtml(it.label)}: <span class="meta">${escHtml(it.value)}</span></div>`).join(""); return wrapSide(s.title,h); },
+        skills(s){ return wrapSide(s.title,s.items.map(it=>`<span class="skill-tag">${escHtml(it.name)}</span>`).join("")); },
+        languages(s){ return wrapSide(s.title,s.items.map(it=>`<div class="side-item">${escHtml(it.name)} <span class="meta">— ${escHtml(it.level)}</span></div>`).join("")); },
+        certificates(s){ return wrapSide(s.title,s.items.map(it=>`<div class="side-item">${escHtml(it.name)}</div>`).join("")); },
+        references(s){ const h=s.items.map(it=>`<div class="ref-item"><div class="ref-name">${escHtml(it.name)}</div><div class="ref-details">${escHtml(it.title)}</div><div class="ref-contact"><span class="icon-inline" style="color:var(--color-accent)">${icoSVG("phone")}</span>${escHtml(it.phone)} &nbsp;·&nbsp; <span class="icon-inline" style="color:var(--color-accent)">${icoSVG("email")}</span>${escHtml(it.email)}</div></div>`).join(""); return wrapSide(s.title,h); },
+        interests(s){ const line=s.items.map(it=>escHtml(it.value)).join(" · "); return wrapSide(s.title,line?`<p class="side-item" style="line-height:1.5">${line}</p>`:""); },
+        strengths(s){ const chips=s.items.filter(it=>it.value&&it.value.trim()).map(it=>`<span class="strength-chip">${escHtml(it.value)}</span>`).join(""); return wrapSide(s.title,chips?`<div class="strengths-row">${chips}</div>`:""); }
+    };
+
+    function contactListHtml(p){ const items=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url,label:l.label}))]; return items.filter(i=>i.val).map(i=>`<li><span class="icon-inline">${icoSVG(i.icon)}</span>${i.label?`<a href="${escHtml(i.val)}">${escHtml(i.label)}</a>`:escHtml(i.val)}</li>`).join(""); }
+    function atsContactLine(p){ const items=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url}))]; return items.filter(i=>i.val).map(i=>`<span class="contact-inline-item"><span class="icon-inline">${icoSVG(i.icon)}</span>${escHtml(i.val)}</span>`).join('<span class="contact-inline-item" style="opacity:.4">|</span>'); }
+    function photoHtml(p){ if(!p||!p.photo)return ""; return `<div class="cv-photo"><img src="${p.photo}" alt="Photo"></div>`; }
+    function atsStrengthsBlock(s){ const chips=s.items.filter(it=>it.value&&it.value.trim()).map(it=>`<span class="strength-chip">${escHtml(it.value)}</span>`).join(""); return wrapMain(s.title,chips?`<div class="strengths-row">${chips}</div>`:""); }
+    function atsPersonalInfoBlock(s){ const line=s.items.map(it=>`${escHtml(it.label)}: ${escHtml(it.value)}`).join(" &nbsp;·&nbsp; "); return wrapMain(s.title,line?`<p class="ats-plain-list">${line}</p>`:""); }
+    function atsPlainList(s,fmt){ const line=s.items.map(fmt).join(", "); return wrapMain(s.title,line?`<p class="ats-plain-list">${line}</p>`:""); }
+    function elegantAvailGrid(s){ if(!s.items.length)return`<p class="empty-note">None added.</p>`; return `<div class="elegant-avail-grid">${s.items.map(it=>`<div class="elegant-avail-item"><span class="av-dot"></span><span class="av-lbl">${escHtml(it.label)}:</span><span class="av-val">${escHtml(it.value)}</span></div>`).join("")}</div>`; }
+
+    function renderPersonalInfoAfterSummary(sections, tid) {
+        if (SIDEBAR_TEMPLATE_IDS.has(tid)) return '';
+        const pi = sections.find(s => s.type==="personal-info" && s.visible);
+        if (!pi || !pi.items.length) return "";
+        return atsPersonalInfoBlock(pi);
+    }
+
+    function renderModern(data, tid) {
+        const p=data.personalDetails;
+        const vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const sideHtml=vis.filter(s=>SIDEBAR_TYPES.has(s.type)).map(s=>SR[s.type]?SR[s.type](s):"").join("");
+        const mainHtml=vis.filter(s=>MAIN_TYPES.has(s.type)).map(s=>SR[s.type]?SR[s.type](s):"").join("");
+        if (tid==="modern-03") return `<div class="modern-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="ats-contact-line">${atsContactLine(p)}</div></div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,tid)}${mainHtml}</div>`;
+        return `<div class="sidebar">${photoHtml(p)}<p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><ul class="contact-list">${contactListHtml(p)}</ul>${sideHtml}</div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,tid)}${mainHtml}</div>`;
+    }
+    function renderAts(data, tid) {
+        const p=data.personalDetails;
+        const vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        let hdr;
+        if(tid==="ats-02"){ const cRight=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url}))]; hdr=`<div class="ats-header-row"><div><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p></div><div class="contact-block">${cRight.filter(i=>i.val).map(i=>`<div class="contact-inline-item"><span class="icon-inline">${icoSVG(i.icon)}</span>${escHtml(i.val)}</div>`).join("")}</div></div><hr class="ats-rule">`; }
+        else { hdr=`<div class="ats-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="ats-contact-line">${atsContactLine(p)}</div></div><hr class="ats-rule">`; }
+        const secsHtml=vis.filter(s=>s.type!=="personal-info").map(s=>{ if(s.type==="skills")return atsPlainList(s,it=>escHtml(it.name)); if(s.type==="languages")return atsPlainList(s,it=>`${escHtml(it.name)} (${escHtml(it.level)})`); if(s.type==="certificates")return atsPlainList(s,it=>escHtml(it.name)); if(s.type==="strengths")return atsStrengthsBlock(s); return SR[s.type]?SR[s.type](s):""; }).join("");
+        return `<div class="main">${hdr}<p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,tid)}${secsHtml}</div>`;
+    }
+    function renderExecutive(data, tid) {
+        const p=data.personalDetails;
+        const vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const secsHtml=vis.filter(s=>s.type!=="personal-info").map(s=>{ if(["skills","languages","certificates"].includes(s.type))return atsPlainList(s,it=>`${escHtml(it.name)}${it.level?` (${escHtml(it.level)})`:""}`); if(s.type==="strengths")return atsStrengthsBlock(s); return SR[s.type]?SR[s.type](s):""; }).join("");
+        return `<div class="exec-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="exec-rule"></div><div class="ats-contact-line exec-contact-line">${atsContactLine(p)}</div></div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,tid)}${secsHtml}</div>`;
+    }
+    function renderExecutive02(data) {
+        const p=data.personalDetails;
+        const vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const sideHtml=vis.filter(s=>SIDEBAR_TYPES.has(s.type)).map(s=>SR[s.type]?SR[s.type](s):"").join("");
+        const mainHtml=vis.filter(s=>MAIN_TYPES.has(s.type)).map(s=>SR[s.type]?SR[s.type](s):"").join("");
+        return `<div class="sidebar">${photoHtml(p)}<p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><ul class="contact-list">${contactListHtml(p)}</ul>${sideHtml}</div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,'executive-02')}${mainHtml}</div>`;
+    }
+    function renderCreative(data) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const sideHtml=vis.filter(s=>SIDEBAR_TYPES.has(s.type)).map(s=>SR[s.type]?SR[s.type](s):"").join("");
+        const mainHtml=vis.filter(s=>MAIN_TYPES.has(s.type)).map(s=>SR[s.type]?SR[s.type](s):"").join("");
+        const cLine=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url}))];
+        const cHtml=cLine.filter(i=>i.val).map(i=>`<span class="contact-inline-item"><span class="icon-inline">${icoSVG(i.icon)}</span>${escHtml(i.val)}</span>`).join('<span style="opacity:.5;margin:0 5px">·</span>');
+        return `<div class="creative-band"><p class="creative-name">${escHtml(p.fullName)}</p><p class="creative-title">${escHtml(p.jobTitle)}</p><div class="creative-contact">${cHtml}</div></div><div class="sidebar">${sideHtml}</div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,'creative-01')}${mainHtml}</div>`;
+    }
+    const RAIL_TYPES = new Set(["skills","languages","certificates","interests"]);
+    function renderSplit(data) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const mainSecs=vis.filter(s=>!RAIL_TYPES.has(s.type)&&s.type!=="personal-info");
+        const railSecs=vis.filter(s=>RAIL_TYPES.has(s.type));
+        const mainHtml=mainSecs.map(s=>{const inner=SR[s.type]?SR[s.type](s):"";return `<div class="split-card">${inner}</div>`;}).join("");
+        const railHtml=railSecs.map(s=>{
+            let ih="";
+            if(s.type==="skills")ih=s.items.map(it=>`<div class="split-rail-item"><span class="dot"></span>${escHtml(it.name)}</div>`).join("");
+            else if(s.type==="languages")ih=s.items.map(it=>`<div class="split-rail-item"><span class="dot"></span>${escHtml(it.name)} — ${escHtml(it.level)}</div>`).join("");
+            else if(s.type==="certificates")ih=s.items.map(it=>`<div class="split-rail-item"><span class="dot"></span>${escHtml(it.name)}</div>`).join("");
+            else ih=s.items.map(it=>`<div class="split-rail-item"><span class="dot"></span>${escHtml(it.value||it.name)}</div>`).join("");
+            return `<div class="split-rail-block"><p class="side-label">${escHtml(s.title)}</p>${ih||`<p class="empty-note">None added.</p>`}</div>`;
+        }).join("");
+        return `<div class="main"><div class="split-header"><div><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p></div><div class="split-contact-row">${atsContactLine(p)}</div></div><hr class="split-rule"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,'split')}${mainHtml}</div><div class="sidebar">${railHtml}</div>`;
+    }
+    function renderTimeline(data, tid) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const secsHtml=vis.filter(s=>s.type!=="personal-info").map(s=>{ if(s.type==="skills")return atsPlainList(s,it=>escHtml(it.name)); if(s.type==="languages")return atsPlainList(s,it=>`${escHtml(it.name)} (${escHtml(it.level)})`); if(s.type==="certificates")return atsPlainList(s,it=>escHtml(it.name)); if(s.type==="strengths")return atsStrengthsBlock(s); return SR[s.type]?SR[s.type](s):""; }).join("");
+        return `<div class="main"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="ats-contact-line">${atsContactLine(p)}</div><hr class="tl-rule"><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,tid)}${secsHtml}</div>`;
+    }
+    const SKILL_LEVEL_PCT={"Beginner":35,"Basic":35,"Intermediate":60,"Proficient":75,"Advanced":90,"Expert":95,"Native":100,"Fluent":95,"Conversational":65};
+    function renderStarter(data) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const strengthsSec=vis.find(s=>s.type==="strengths");
+        const strengthsHtml=strengthsSec&&strengthsSec.items.some(it=>it.value&&it.value.trim())?`<div class="strengths-row">${strengthsSec.items.filter(it=>it.value&&it.value.trim()).map(it=>`<span class="strength-chip">${escHtml(it.value)}</span>`).join("")}</div>`:"";
+        const skillsSec=vis.find(s=>s.type==="skills");
+        const skillsHtml=skillsSec?`<div class="main-section"><p class="starter-sec-title">${escHtml(skillsSec.title)}</p>${skillsSec.items.length?skillsSec.items.map(it=>{const pct=SKILL_LEVEL_PCT[it.level]||55;return`<div class="skillbar-row"><div class="skillbar-lbl">${escHtml(it.name)}</div><div class="skillbar-track"><div class="skillbar-fill" style="width:${pct}%"></div></div><span class="skillbar-pct">${pct}%</span></div>`;}).join(""):`<p class="empty-note">None added.</p>`}</div>`:"";
+        const restSecs=vis.filter(s=>s!==strengthsSec&&s.type!=="skills"&&s.type!=="personal-info");
+        const restHtml=restSecs.map(s=>{const inner=SR[s.type]?SR[s.type](s):"";return `<div class="main-section"><p class="starter-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/,"")}</div>`;}).join("");
+        const photoEl=p.photo?`<img src="${p.photo}">`:`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+        return `<div class="starter-header"><div class="starter-photo">${photoEl}</div><div><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p></div></div><div class="starter-contact-row">${atsContactLine(p)}</div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${strengthsHtml}${skillsHtml}${restHtml}</div>`;
+    }
+    function renderCombined(data) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const SRC=new Set(["experience","projects","custom"]);
+        const entries=[];
+        vis.filter(s=>SRC.has(s.type)).forEach(s=>{
+            s.items.forEach(it=>{
+                if(s.type==="experience")entries.push({tag:"Job",title:it.role,sub:[it.company,it.location].filter(Boolean).join(" · "),start:it.startDate,end:it.endDate,current:it.current,bullets:it.bullets||[]});
+                else if(s.type==="projects")entries.push({tag:"Project",title:it.name,sub:it.url||"",start:it.startDate,end:it.endDate,current:false,bullets:it.bullets||[]});
+                else entries.push({tag:s.title||"Activity",title:it.title||s.title,sub:"",start:"",end:"",current:false,bullets:it.bullets||[]});
+            });
+        });
+        entries.sort((a,b)=>{if(a.current&&!b.current)return -1;if(b.current&&!a.current)return 1;return(b.start||"").localeCompare(a.start||"");});
+        const entriesHtml=entries.map(e=>`<div class="combined-entry"><span class="combined-tag">${escHtml(e.tag)}</span><p class="entry-title">${escHtml(e.title||"")}</p>${e.sub?`<p class="entry-sub">${escHtml(e.sub)}</p>`:""}${e.start?`<span class="entry-date">${fmtDate(e.start,e.end,e.current)}</span>`:""}${e.bullets.length?`<ul>${e.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join("");
+        const otherSecs=vis.filter(s=>!SRC.has(s.type)&&s.type!=="personal-info");
+        const otherHtml=otherSecs.map(s=>{
+            if(s.type==="skills")return `<p class="combined-sec-title">${escHtml(s.title)}</p><div class="combined-plain-chips">${s.items.length?s.items.map(it=>`<span class="strength-chip">${escHtml(it.name)}</span>`).join(""):`<p class="empty-note">None added.</p>`}</div>`;
+            if(s.type==="strengths"){const vals=s.items.filter(it=>it.value&&it.value.trim());return `<p class="combined-sec-title">${escHtml(s.title)}</p><div class="combined-plain-chips">${vals.length?vals.map(it=>`<span class="strength-chip">${escHtml(it.value)}</span>`).join(""):`<p class="empty-note">None added.</p>`}</div>`;}
+            if(s.type==="languages")return `<p class="combined-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length?s.items.map(it=>`${escHtml(it.name)} (${escHtml(it.level)})`).join(", "):`<span class="empty-note">None added.</span>`}</p>`;
+            if(s.type==="certificates")return `<p class="combined-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length?s.items.map(it=>escHtml(it.name)).join(", "):`<span class="empty-note">None added.</span>`}</p>`;
+            const inner=SR[s.type]?SR[s.type](s):"";
+            return `<p class="combined-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/,"")}`;
+        }).join("");
+        return `<div class="main"><div class="combined-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="combined-contact-row">${atsContactLine(p)}</div></div><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,'combined')}${entriesHtml.length?`<p class="combined-sec-title">What I've Been Doing</p>${entriesHtml}`:""}${otherHtml}</div>`;
+    }
+    function renderPractical(data) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const availSec=vis.find(s=>s.type==="personal-info");
+        const availHtml=availSec?`<p class="practical-sec-title">${escHtml(availSec.title)}</p>${availSec.items.length?`<div class="avail-grid">${availSec.items.map(it=>`<div class="avail-item"><div class="avail-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="avail-text"><span class="avail-label">${escHtml(it.label)}</span><span class="avail-value">${escHtml(it.value)}</span></div></div>`).join("")}</div>`:`<p class="empty-note">None added.</p>`}`:"";
+        const restSecs=vis.filter(s=>s.type!=="personal-info");
+        const restHtml=restSecs.map(s=>{
+            if(s.type==="experience")return `<p class="practical-sec-title">${escHtml(s.title)}</p>${s.items.length?s.items.map(it=>`<div class="practical-entry"><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location?` · ${escHtml(it.location)}`:""} — ${fmtDate(it.startDate,it.endDate,it.current)}</p>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join(""):`<p class="empty-note">No entries yet.</p>`}`;
+            if(s.type==="skills"||s.type==="strengths"){const vals=s.type==="skills"?s.items.map(it=>it.name):s.items.filter(it=>it.value&&it.value.trim()).map(it=>it.value);return `<p class="practical-sec-title">${escHtml(s.title)}</p><div class="practical-plain-chips">${vals.length?vals.map(v=>`<span class="strength-chip">${escHtml(v)}</span>`).join(""):`<p class="empty-note">None added.</p>`}</div>`;}
+            if(s.type==="languages")return `<p class="practical-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length?s.items.map(it=>`${escHtml(it.name)} (${escHtml(it.level)})`).join(", "):`<span class="empty-note">None added.</span>`}</p>`;
+            if(s.type==="certificates")return `<p class="practical-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length?s.items.map(it=>escHtml(it.name)).join(", "):`<span class="empty-note">None added.</span>`}</p>`;
+            const inner=SR[s.type]?SR[s.type](s):"";
+            return `<p class="practical-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/,"")}`;
+        }).join("");
+        return `<div class="main"><div class="practical-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="practical-contact-row">${atsContactLine(p)}</div></div><hr class="practical-rule"><p class="summary">${escHtml(p.summary)}</p>${availHtml}${restHtml}</div>`;
+    }
+    function renderFunctional(data) {
+        const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
+        const groupSecs=vis.filter(s=>s.type==="custom"&&s.items.length);
+        const expSec=vis.find(s=>s.type==="experience");
+        const otherSecs=vis.filter(s=>!["custom","experience","personal-info"].includes(s.type));
+        const hasGroups=groupSecs.length>0;
+        const groupsHtml=groupSecs.map(s=>s.items.map(it=>`<div class="functional-group"><p class="functional-group-title"><span class="dot"></span>${escHtml(it.title||s.title)}</p>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join("")).join("");
+        const historyHtml=expSec?(hasGroups?`<div class="functional-history"><p class="functional-sec-title" style="margin-top:0">Work History</p>${expSec.items.length?expSec.items.map(it=>`<div class="functional-history-item"><span><span class="fh-role">${escHtml(it.role)}</span> — ${escHtml(it.company)}</span><span>${fmtDate(it.startDate,it.endDate,it.current)}</span></div>`).join(""):`<p class="empty-note">No entries yet.</p>`}</div>`:`<p class="functional-sec-title" style="margin-top:0">${escHtml(expSec.title)}</p>${expSec.items.length?expSec.items.map(it=>`<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location?` · ${escHtml(it.location)}`:""}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,it.current)}</span></div>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join(""):`<p class="empty-note">No entries yet.</p>`}`):"";
+        const restHtml=otherSecs.map(s=>{
+            if(s.type==="skills"||s.type==="strengths"){const vals=s.type==="skills"?s.items.map(it=>it.name):s.items.filter(it=>it.value&&it.value.trim()).map(it=>it.value);return `<p class="functional-sec-title">${escHtml(s.title)}</p><div class="strengths-row">${vals.length?vals.map(v=>`<span class="strength-chip">${escHtml(v)}</span>`).join(""):`<p class="empty-note">None added.</p>`}</div>`;}
+            if(s.type==="languages")return `<p class="functional-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length?s.items.map(it=>`${escHtml(it.name)} (${escHtml(it.level)})`).join(", "):`<span class="empty-note">None added.</span>`}</p>`;
+            if(s.type==="certificates")return `<p class="functional-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length?s.items.map(it=>escHtml(it.name)).join(", "):`<span class="empty-note">None added.</span>`}</p>`;
+            const inner=SR[s.type]?SR[s.type](s):"";
+            return `<p class="functional-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/,"")}`;
+        }).join("");
+        return `<div class="main"><div class="functional-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="functional-contact-row">${atsContactLine(p)}</div></div><p class="summary">${escHtml(p.summary)}</p>${renderPersonalInfoAfterSummary(vis,'functional')}${hasGroups?`<p class="functional-sec-title" style="margin-top:0">Areas of Strength</p>${groupsHtml}`:""}${historyHtml}${restHtml}</div>`;
+    }
+    function renderTrade(data, tid) {
+        const p = data.personalDetails, vis = data.sections.filter(s => s.visible).sort((a, b) => a.order - b.order);
+        const certSec  = vis.find(s => s.type === "certificates");
+        const skillSec = vis.find(s => s.type === "skills");
+        const expSec   = vis.find(s => s.type === "experience");
+        const otherSecs = vis.filter(s => !["certificates","skills","experience","personal-info"].includes(s.type));
+
+        if (tid === "trade-02") {
+            const credHtml = certSec && certSec.items.length
+                ? certSec.items.map(it =>
+                    `<div class="trade2-cred"><div class="trade2-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>${escHtml(it.name)}</div>`
+                  ).join("")
+                : `<p class="empty-note">None added.</p>`;
+
+            const toolsHtml2 = skillSec && skillSec.items.length
+                ? skillSec.items.map(it => `<div class="trade2-tool">${escHtml(it.name)}</div>`).join("")
+                : `<p class="empty-note">None added.</p>`;
+
+            const expHtml2 = expSec
+                ? expSec.items.map(it =>
+                    `<div class="trade-entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location ? ` · ${escHtml(it.location)}` : ""}</p></div><span class="entry-date">${fmtDate(it.startDate, it.endDate, it.current)}</span></div>${it.bullets && it.bullets.length ? `<ul>${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`
+                  ).join("")
+                : `<p class="empty-note">No entries yet.</p>`;
+
+            const restHtml2 = otherSecs.map(s => {
+                if (s.type === "strengths") { const vals = s.items.filter(it => it.value && it.value.trim()).map(it => it.value); return `<p class="trade-sec-title">${escHtml(s.title)}</p><div class="trade-tools-row">${vals.length ? vals.map(v => `<span class="strength-chip">${escHtml(v)}</span>`).join("") : `<p class="empty-note">None added.</p>`}</div>`; }
+                if (s.type === "languages") return `<p class="trade-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length ? s.items.map(it => `${escHtml(it.name)} (${escHtml(it.level)})`).join(", ") : `<span class="empty-note">None added.</span>`}</p>`;
+                if (s.type === "interests") return `<p class="trade-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.map(it => escHtml(it.value)).join(" · ")}</p>`;
+                if (s.type === "education") return `<p class="trade-sec-title">${escHtml(s.title)}</p>${s.items.map(it => `<div class="trade-entry"><p class="entry-title">${escHtml(it.qualification)}</p><p class="entry-sub">${escHtml(it.institution)}${it.location ? ` · ${escHtml(it.location)}` : ""} — ${fmtDate(it.startDate, it.endDate, it.current)}</p>${it.notes ? `<p style="font-size:10.5px;color:#555;margin:2px 0 0">${escHtml(it.notes)}</p>` : ""}</div>`).join("")}`;
+                if (s.type === "custom") return `<p class="trade-sec-title">${escHtml(s.title)}</p>${s.items.map(it => `<div class="trade-entry"><p class="entry-title">${escHtml(it.title || "")}</p>${it.bullets && it.bullets.length ? `<ul>${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`).join("")}`;
+                const inner = SR[s.type] ? SR[s.type](s) : "";
+                return `<p class="trade-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/, "")}`;
+            }).join("");
+
+            return `<div class="trade-header trade2-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="trade-contact-row">${atsContactLine(p)}</div></div><div class="trade2-sidebar"><p class="trade-sec-title" style="margin-top:0">Credentials</p>${credHtml}<p class="trade-sec-title">Tools</p>${toolsHtml2}</div><div class="main">${expHtml2 ? `<p class="trade-sec-title" style="margin-top:0">Experience</p>${expHtml2}` : ""}${restHtml2}</div>`;
+        }
+
+        const badgesHtml = certSec && certSec.items.length
+            ? `<div class="badge-row">${certSec.items.map(it =>
+                `<div class="trade-badge"><div class="badge-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="badge-txt">${escHtml(it.name)}</span></div>`
+              ).join("")}</div>`
+            : "";
+
+        const toolsHtml = skillSec && skillSec.items.length
+            ? `<div class="trade-tools-row">${skillSec.items.map(it =>
+                `<span class="strength-chip">${escHtml(it.name)}</span>`
+              ).join("")}</div>`
+            : "";
+
+        const expHtml = expSec
+            ? expSec.items.map(it =>
+                `<div class="trade-entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location ? ` · ${escHtml(it.location)}` : ""}</p></div><span class="entry-date">${fmtDate(it.startDate, it.endDate, it.current)}</span></div>${it.bullets && it.bullets.length ? `<ul>${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`
+              ).join("")
+            : "";
+
+        const restHtml = otherSecs.map(s => {
+            if (s.type === "strengths") { const vals = s.items.filter(it => it.value && it.value.trim()).map(it => it.value); return `<p class="trade-sec-title">${escHtml(s.title)}</p><div class="trade-tools-row">${vals.length ? vals.map(v => `<span class="strength-chip">${escHtml(v)}</span>`).join("") : `<p class="empty-note">None added.</p>`}</div>`; }
+            if (s.type === "languages") return `<p class="trade-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.length ? s.items.map(it => `${escHtml(it.name)} (${escHtml(it.level)})`).join(", ") : `<span class="empty-note">None added.</span>`}</p>`;
+            if (s.type === "interests") return `<p class="trade-sec-title">${escHtml(s.title)}</p><p class="ats-plain-list">${s.items.map(it => escHtml(it.value)).join(" · ")}</p>`;
+            if (s.type === "education") return `<p class="trade-sec-title">${escHtml(s.title)}</p>${s.items.map(it => `<div class="trade-entry"><p class="entry-title">${escHtml(it.qualification)}</p><p class="entry-sub">${escHtml(it.institution)}${it.location ? ` · ${escHtml(it.location)}` : ""} — ${fmtDate(it.startDate, it.endDate, it.current)}</p>${it.notes ? `<p style="font-size:10.5px;color:#555;margin:2px 0 0">${escHtml(it.notes)}</p>` : ""}</div>`).join("")}`;
+            if (s.type === "custom") return `<p class="trade-sec-title">${escHtml(s.title)}</p>${s.items.map(it => `<div class="trade-entry"><p class="entry-title">${escHtml(it.title || "")}</p>${it.bullets && it.bullets.length ? `<ul>${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`).join("")}`;
+            const inner = SR[s.type] ? SR[s.type](s) : "";
+            return `<p class="trade-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/, "")}`;
+        }).join("");
+
+        return `<div class="trade-header"><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p><div class="trade-contact-row">${atsContactLine(p)}</div></div><div class="main">${badgesHtml ? `<p class="trade-sec-title">Credentials &amp; Training</p>${badgesHtml}` : ""}${toolsHtml ? `<p class="trade-sec-title">Tools &amp; Equipment</p>${toolsHtml}` : ""}${expHtml ? `<p class="trade-sec-title">Experience</p>${expHtml}` : ""}${restHtml}</div>`;
+    }
+
+    function renderMonogram(data) {
+        const p = data.personalDetails, vis = data.sections.filter(s => s.visible).sort((a, b) => a.order - b.order);
+        const skillSec = vis.find(s => s.type === "skills");
+        const langSec  = vis.find(s => s.type === "languages");
+        const certSec  = vis.find(s => s.type === "certificates");
+        const intSec   = vis.find(s => s.type === "interests");
+        const piSec    = vis.find(s => s.type === "personal-info");
+        const mainSecs = vis.filter(s => MAIN_TYPES.has(s.type));
+
+        const badgeEl = p.photo
+            ? `<div class="mono-badge"><img src="${p.photo}" alt="Photo"></div>`
+            : `<div class="mono-badge">${initials(p.fullName)}</div>`;
+
+        const contactItems = [
+            { icon: "email",    val: p.email },
+            { icon: "phone",    val: p.phone },
+            { icon: "location", val: p.location },
+            ...(p.links || []).map(l => ({ icon: "link", val: l.url }))
+        ].filter(i => i.val);
+
+        const contactHtml = contactItems.map((i, idx) =>
+            `<span class="contact-inline-item"><span class="icon-inline">${icoSVG(i.icon)}</span>${escHtml(i.val)}</span>${idx < contactItems.length - 1 ? '<span class="mono-divider"> · </span>' : ""}`
+        ).join("");
+
+        const skillsHtml = skillSec && skillSec.items.length
+            ? `<p class="mono-kicker">${escHtml(skillSec.title)}</p><hr class="mono-hr"><div class="mono-two-col">${skillSec.items.map(it => `<div class="mono-skill-row"><span class="mono-chip-line">${escHtml(it.name)}</span>${dotRating(it.level)}</div>`).join("")}</div>`
+            : "";
+
+        const langHtml = langSec && langSec.items.length
+            ? `<p class="mono-kicker">${escHtml(langSec.title)}</p><hr class="mono-hr"><div>${langSec.items.map(it => `<div class="mono-skill-row"><span>${escHtml(it.name)}</span><span style="font-size:10px;color:#888">${escHtml(it.level)}</span></div>`).join("")}</div>`
+            : "";
+
+        const certHtml = certSec && certSec.items.length
+            ? `<p class="mono-kicker">${escHtml(certSec.title)}</p><hr class="mono-hr"><div>${certSec.items.map(it => `<div style="font-size:10.5px;padding:2px 0;border-bottom:1px solid #F0EDE8;color:#333">${escHtml(it.name)}</div>`).join("")}</div>`
+            : "";
+
+        const piHtml = piSec && piSec.items.length
+            ? `<p class="mono-kicker">${escHtml(piSec.title)}</p><hr class="mono-hr"><div>${piSec.items.map(it => `<div style="font-size:10.5px;padding:1px 0;color:#555">${escHtml(it.label)}: <strong style="color:#222">${escHtml(it.value)}</strong></div>`).join("")}</div>`
+            : "";
+
+        const intHtml = intSec && intSec.items.length
+            ? `<p class="mono-kicker">${escHtml(intSec.title)}</p><hr class="mono-hr"><p style="font-size:10.5px;color:#555;line-height:1.5">${intSec.items.map(it => escHtml(it.value)).join(" · ")}</p>`
+            : "";
+
+        const mainHtml = mainSecs.map(s => {
+            if (s.type === "experience") return `<p class="mono-kicker">${escHtml(s.title)}</p><hr class="mono-hr">${s.items.map(it => `<div class="mono-entry"><div class="entry-header"><div><p class="entry-title" style="font-size:12px">${escHtml(it.role)}</p><p class="entry-sub" style="font-size:10.5px">${escHtml(it.company)}${it.location ? ` · ${escHtml(it.location)}` : ""}</p></div><span class="entry-date" style="font-size:10px">${fmtDate(it.startDate, it.endDate, it.current)}</span></div>${it.bullets && it.bullets.length ? `<ul style="font-size:10.5px">${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`).join("")}`;
+            if (s.type === "education") return `<p class="mono-kicker">${escHtml(s.title)}</p><hr class="mono-hr">${s.items.map(it => `<div class="mono-entry"><p class="entry-title" style="font-size:12px">${escHtml(it.qualification)}</p><p class="entry-sub" style="font-size:10.5px">${escHtml(it.institution)} — ${fmtDate(it.startDate, it.endDate, it.current)}</p>${it.notes ? `<p style="font-size:10px;color:#777;margin:2px 0 0">${escHtml(it.notes)}</p>` : ""}</div>`).join("")}`;
+            if (s.type === "projects") return `<p class="mono-kicker">${escHtml(s.title)}</p><hr class="mono-hr">${s.items.map(it => `<div class="mono-entry"><p class="entry-title" style="font-size:12px">${escHtml(it.name)}</p>${it.bullets && it.bullets.length ? `<ul style="font-size:10.5px">${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`).join("")}`;
+            if (s.type === "custom") return `<p class="mono-kicker">${escHtml(s.title)}</p><hr class="mono-hr">${s.items.map(it => `<div class="mono-entry"><p class="entry-title" style="font-size:12px">${escHtml(it.title || "")}</p>${it.bullets && it.bullets.length ? `<ul style="font-size:10.5px">${it.bullets.map(b => `<li>${escHtml(b)}</li>`).join("")}</ul>` : ""}</div>`).join("")}`;
+            return "";
+        }).join("");
+
+        return `<div class="mono-top">${badgeEl}<p class="name" style="font-size:26px">${escHtml(p.fullName)}</p><p class="job-title" style="font-size:13px">${escHtml(p.jobTitle)}</p><div class="mono-contact-row">${contactHtml}</div></div><div class="main">${p.summary ? `<p class="summary" style="margin-bottom:12px">${escHtml(p.summary)}</p>` : ""}${mainHtml}${skillsHtml}${langHtml}${certHtml}${piHtml}${intHtml}</div>`;
+    }
+
+    function renderFacet(data) {
+        const p = data.personalDetails, vis = data.sections.filter(s => s.visible).sort((a, b) => a.order - b.order);
+        const skillSec = vis.find(s => s.type === "skills");
+        const langSec  = vis.find(s => s.type === "languages");
+        const certSec  = vis.find(s => s.type === "certificates");
+        const intSec   = vis.find(s => s.type === "interests");
+        const piSec    = vis.find(s => s.type === "personal-info");
+        const strSec   = vis.find(s => s.type === "strengths");
+        const mainSecs = vis.filter(s => MAIN_TYPES.has(s.type));
+
+        const badgeEl = p.photo
+            ? `<div class="facet-badge"><img src="${p.photo}" alt="Photo"></div>`
+            : `<div class="facet-badge">${initials(p.fullName)}</div>`;
+
+        const contactMini = [
+            { icon: "email",    val: p.email },
+            { icon: "phone",    val: p.phone },
+            { icon: "location", val: p.location }
+        ].filter(i => i.val).map(i =>
+            `<div><span class="icon-inline" style="margin-right:2px">${icoSVG(i.icon)}</span>${escHtml(i.val)}</div>`
+        ).join("");
+
+        const skillsHtml = skillSec && skillSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(skillSec.title)}</p>${skillSec.items.map(it => `<div class="facet-skill-row"><span>${escHtml(it.name)}</span>${dotRating(it.level)}</div>`).join("")}</div>`
+            : "";
+        const langHtml = langSec && langSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(langSec.title)}</p>${langSec.items.map(it => `<div class="facet-skill-row"><span>${escHtml(it.name)}</span><span style="font-size:9px;opacity:.7">${escHtml(it.level)}</span></div>`).join("")}</div>`
+            : "";
+        const certHtml = certSec && certSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(certSec.title)}</p>${certSec.items.map(it => `<div style="font-size:10px;color:rgba(255,255,255,0.85);padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.1)">${escHtml(it.name)}</div>`).join("")}</div>`
+            : "";
+        const piHtml = piSec && piSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(piSec.title)}</p>${elegantAvailGrid(piSec)}</div>`
+            : "";
+        const strHtml = strSec && strSec.items.some(it => it.value && it.value.trim())
+            ? `<div class="side-section"><p class="side-label">${escHtml(strSec.title)}</p><div class="strengths-row">${strSec.items.filter(it => it.value && it.value.trim()).map(it => `<span class="strength-chip" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3)">${escHtml(it.value)}</span>`).join("")}</div></div>`
+            : "";
+        const intHtml = intSec && intSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(intSec.title)}</p><p style="font-size:10px;color:rgba(255,255,255,0.8);line-height:1.5">${intSec.items.map(it => escHtml(it.value)).join(" · ")}</p></div>`
+            : "";
+
+        const mainHtml = mainSecs.map(s => SR[s.type] ? SR[s.type](s) : "").join("");
+
+        return `<div class="facet-sidebar">${badgeEl}<div class="facet-contact-mini">${contactMini}</div>${skillsHtml}${langHtml}${certHtml}${piHtml}${strHtml}${intHtml}</div><div class="facet-main"><p class="name" style="font-size:26px">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p>${p.summary ? `<p class="summary" style="margin:8px 0 12px">${escHtml(p.summary)}</p>` : ""}${mainHtml}</div>`;
+    }
+
+    function renderDuotone(data) {
+        const p = data.personalDetails, vis = data.sections.filter(s => s.visible).sort((a, b) => a.order - b.order);
+        const skillSec = vis.find(s => s.type === "skills");
+        const langSec  = vis.find(s => s.type === "languages");
+        const certSec  = vis.find(s => s.type === "certificates");
+        const intSec   = vis.find(s => s.type === "interests");
+        const piSec    = vis.find(s => s.type === "personal-info");
+        const strSec   = vis.find(s => s.type === "strengths");
+        const mainSecs = vis.filter(s => MAIN_TYPES.has(s.type));
+
+        const skillsHtml = skillSec && skillSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(skillSec.title)}</p>${skillSec.items.map(it => `<div class="duo-skill-row"><span style="font-size:10.5px">${escHtml(it.name)}</span>${dotRating(it.level)}</div>`).join("")}</div>`
+            : "";
+        const langHtml = langSec && langSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(langSec.title)}</p>${langSec.items.map(it => `<div class="duo-skill-row"><span style="font-size:10.5px">${escHtml(it.name)}</span><span style="font-size:9px;color:#888">${escHtml(it.level)}</span></div>`).join("")}</div>`
+            : "";
+        const certHtml = certSec && certSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(certSec.title)}</p>${certSec.items.map(it => `<div style="font-size:10.5px;color:#555;padding:2px 0;border-bottom:1px solid #E8E4DE">${escHtml(it.name)}</div>`).join("")}</div>`
+            : "";
+        const piHtml = piSec && piSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(piSec.title)}</p>${elegantAvailGrid(piSec)}</div>`
+            : "";
+        const strHtml = strSec && strSec.items.some(it => it.value && it.value.trim())
+            ? `<div class="side-section"><p class="side-label">${escHtml(strSec.title)}</p><div class="strengths-row">${strSec.items.filter(it => it.value && it.value.trim()).map(it => `<span class="strength-chip">${escHtml(it.value)}</span>`).join("")}</div></div>`
+            : "";
+        const intHtml = intSec && intSec.items.length
+            ? `<div class="side-section"><p class="side-label">${escHtml(intSec.title)}</p><p style="font-size:10.5px;color:#666;line-height:1.5">${intSec.items.map(it => escHtml(it.value)).join(" · ")}</p></div>`
+            : "";
+
+        const mainHtml = mainSecs.map(s => SR[s.type] ? SR[s.type](s) : "").join("");
+
+        return `<div class="duo-sidebar"><p class="name" style="font-size:22px">${escHtml(p.fullName)}</p><p class="job-title" style="font-size:12px">${escHtml(p.jobTitle)}</p><div class="duo-gold-rule"></div><ul class="contact-list" style="font-size:10px">${contactListHtml(p)}</ul>${skillsHtml}${langHtml}${certHtml}${piHtml}${strHtml}${intHtml}</div><div class="duo-main"><p class="summary" style="margin:0 0 12px">${escHtml(p.summary)}</p>${mainHtml}</div>`;
+    }
+    
+function generateSectionItems(sec) {
+    let inner = '';
+    switch (sec.type) {
+        case 'experience':
+        case 'education':
+        case 'projects':
+        case 'custom':
+            inner = sec.items.map(it => {
+                if (sec.type === 'experience') return `<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location?` · ${escHtml(it.location)}`:""}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,it.current)}</span></div>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`;
+                if (sec.type === 'education') return `<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.qualification)}</p><p class="entry-sub">${escHtml(it.institution)}${it.location?` · ${escHtml(it.location)}`:""}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,it.current)}</span></div>${it.notes?`<ul><li>${escHtml(it.notes)}</li></ul>`:""}</div>`;
+                if (sec.type === 'projects') return `<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.name)}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,false)}</span></div>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`;
+                if (sec.type === 'custom') return `<div class="entry"><p class="entry-title">${escHtml(it.title||"")}</p>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`;
+                return '';
+            }).join('');
+            break;
+        case 'skills':
+            inner = sec.items.map(it => `<span class="skill-tag">${escHtml(it.name)}</span>`).join('');
+            break;
+        case 'languages':
+            inner = sec.items.map(it => `<div class="side-item">${escHtml(it.name)} <span class="meta">${escHtml(it.level)}</span></div>`).join('');
+            break;
+        case 'certificates':
+            inner = sec.items.map(it => `<div class="side-item">${escHtml(it.name)}</div>`).join('');
+            break;
+        case 'references':
+            inner = sec.items.map(it => `<div class="ref-item"><div class="ref-name">${escHtml(it.name)}</div><div class="ref-details">${escHtml(it.title)}</div><div class="ref-contact"><span class="icon-inline" style="color:var(--color-accent)">${icoSVG("phone")}</span>${escHtml(it.phone)} &nbsp;·&nbsp; <span class="icon-inline" style="color:var(--color-accent)">${icoSVG("email")}</span>${escHtml(it.email)}</div></div>`).join('');
+            break;
+        case 'interests':
+            inner = sec.items.map(it => escHtml(it.value)).join(" · ");
+            break;
+        case 'strengths':
+            inner = sec.items.filter(it=>it.value&&it.value.trim()).map(it => `<span class="strength-chip">${escHtml(it.value)}</span>`).join('');
+            break;
+        case 'personal-info':
+            inner = sec.items.map(it => `<div class="side-item">${escHtml(it.label)}: <span class="meta">${escHtml(it.value)}</span></div>`).join('');
+            break;
+        default:
+            inner = '';
+    }
+    return inner;
+}
+
+let cvData, currentTemplateId = "modern-01", currentStep = 0,
+    atsPanelOpen = false, targetJD = "", usingDemoData = true;
+let allResumes = {}, currentCvId = null, isMobilePreviewOpen = false;
+let _saveToastTimer = null;
+
+function escHtml(s) { if (!s) return ""; return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function genId(p)   { return `${p}_${Date.now().toString(36)}${Math.random().toString(36).slice(2,5)}`; }
+function getP(o, path) { return path.split(".").reduce((a,k) => a==null?undefined:a[k], o); }
+function setP(o, path, val) {
+    const ks = path.split(".");
+    let c = o;
+    for (let i = 0; i < ks.length - 1; i++) {
+        const k = ks[i];
+        if (c[k] === undefined || c[k] === null) {
+            c[k] = isNaN(Number(ks[i+1])) ? {} : [];
+        }
+        c = c[k];
+    }
+    c[ks[ks.length - 1]] = val;
+}
+function fmtDate(start, end, cur) {
+    const f = d => {
+        if (!d) return "";
+        const [y, m] = d.split("-");
+        const M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        return m ? `${M[+m-1]} ${y}` : y;
+    };
+    if (!start) return "";
+    const endLabel = cur ? "Present" : f(end);
+    return endLabel ? `${f(start)} - ${endLabel}` : f(start);
+}
+function initials(name) { return (name||"").trim().split(/\s+/).map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase(); }
+function dotRating(level) {
+    const map = { "Beginner":1,"Basic":1,"Intermediate":3,"Proficient":4,"Advanced":4,"Expert":5,"Native":5,"Fluent":5,"Conversational":3 };
+    const n = map[level] || 3;
+    let d = "";
+    for (let i=0;i<5;i++) d += `<span class="rate-dot${i<n?" filled":""}"></span>`;
+    return `<span class="rate-dots">${d}</span>`;
+}
+function icoSVG(name) {
+    const i = {
+        email:    `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+        phone:    `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+        location: `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+        link:     `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`
+    };
+    return i[name] || "";
+}
+function debounce(fn, delay) { let t; return function(...a) { clearTimeout(t); t = setTimeout(()=>fn.apply(this,a),delay); }; }
+
+function loadAllResumes() {
+    try {
+        const stored = localStorage.getItem('Mellow CV_all_resumes');
+        if (stored) {
+            allResumes = JSON.parse(stored);
+        } else {
+            const def     = JSON.parse(document.getElementById('cv-data').textContent);
+            const starter = JSON.parse(document.getElementById('cv-data-starter').textContent);
+            const trade   = JSON.parse(document.getElementById('cv-data-trade').textContent);
+            [def, starter, trade].forEach(r => {
+                const pi = r.sections.find(s => s.type === 'personal-info');
+                if (pi) pi.order = 0;
+            });
+            allResumes[def.meta.cvId]     = def;
+            allResumes[starter.meta.cvId] = starter;
+            allResumes[trade.meta.cvId]   = trade;
+            saveAllResumes();
+        }
+    } catch(e) { allResumes = {}; }
+}
+function saveAllResumes() { try { localStorage.setItem('Mellow CV_all_resumes', JSON.stringify(allResumes)); } catch(e) {} }
+function getCurrentResume() {
+    if (!currentCvId || !allResumes[currentCvId]) {
+        const ids = Object.keys(allResumes);
+        if (ids.length) currentCvId = ids[0];
+        else { const def = JSON.parse(document.getElementById('cv-data').textContent); currentCvId = def.meta.cvId; allResumes[currentCvId] = def; saveAllResumes(); }
+    }
+    return allResumes[currentCvId];
+}
+function setCurrentResume(cvId) {
+    if (allResumes[cvId]) {
+        currentCvId = cvId; cvData = allResumes[cvId];
+        currentTemplateId = cvData.meta.templateId || 'modern-01';
+        usingDemoData = false;
+        renderPreview(); setStep(currentStep); updatePaLabel(); autoSave(); navigate('builder');
+    }
+}
+function loadData() {
+    loadAllResumes();
+    const ids = Object.keys(allResumes);
+    if (ids.length) {
+        currentCvId = ids[0]; cvData = allResumes[currentCvId];
+        currentTemplateId = cvData.meta.templateId || 'modern-01'; usingDemoData = false;
+    } else {
+        const def = JSON.parse(document.getElementById('cv-data').textContent);
+        currentCvId = def.meta.cvId; allResumes[currentCvId] = def; saveAllResumes();
+        cvData = def; currentTemplateId = def.meta.templateId || 'modern-01'; usingDemoData = true;
+    }
+}
+function autoSave() {
+    if (!cvData) return;
+    allResumes[currentCvId] = cvData;
+    saveAllResumes();
+    const dot = document.getElementById('save-dot');
+    if (dot) { dot.classList.add('saving'); setTimeout(()=>dot.classList.remove('saving'),600); }
+    clearTimeout(_saveToastTimer);
+    _saveToastTimer = setTimeout(()=>showToast('Auto-saved','success'), 1500);
+}
+function showToast(msg, type='info') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = msg;
+    c.appendChild(t);
+    requestAnimationFrame(()=>t.classList.add('show'));
+    if (type !== 'loading') setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); },3000);
+    return t;
+}
+
+function renderManager() {
+    const grid = document.getElementById('manager-grid');
+    const count = document.getElementById('resume-count');
+    const ids = Object.keys(allResumes);
+    count.textContent = ids.length;
+    if (!ids.length) { grid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:var(--t3);">No resumes yet. Create one!</p>'; return; }
+    grid.innerHTML = ids.map(id => {
+        const r = allResumes[id];
+        const name = r.personalDetails.fullName || 'Untitled';
+        const tmpl = r.meta.templateId || 'modern-01';
+        const svg  = SVGS[tmpl] || generateThumbnailSVG('modern-01');
+        const isCurrent = (id===currentCvId);
+        return `<div class="resume-card" style="${isCurrent?'border:2px solid var(--accent);':''}">
+            <div class="thumb">${svg}</div>
+            <div class="meta"><strong>${escHtml(name)}</strong><small>${tmpl}</small></div>
+            <div class="actions">
+                <button class="btn btn-sm btn-primary" onclick="setCurrentResume('${id}')">Open</button>
+                <button class="btn btn-sm btn-outline" onclick="duplicateResume('${id}')">Duplicate</button>
+                <button class="btn btn-sm btn-outline" onclick="renameResume('${id}')">Rename</button>
+                <button class="btn btn-sm btn-outline" onclick="deleteResume('${id}')" style="color:#DC2626;">Delete</button>
+            </div></div>`;
+    }).join('');
+}
+function createNewResume() {
+    const base = JSON.parse(document.getElementById('cv-data').textContent);
+    const newId = 'cv_' + Date.now().toString(36);
+    base.meta.cvId = newId; base.personalDetails.fullName = 'New Resume';
+    allResumes[newId] = base; saveAllResumes(); renderManager(); setCurrentResume(newId);
+    showToast('New resume created','success');
+}
+function duplicateResume(id) { const copy=JSON.parse(JSON.stringify(allResumes[id])); const newId='cv_'+Date.now().toString(36); copy.meta.cvId=newId; copy.personalDetails.fullName+=' (copy)'; allResumes[newId]=copy; saveAllResumes(); renderManager(); showToast('Duplicated','success'); }
+function renameResume(id)    { const n=prompt('Enter new name:',allResumes[id].personalDetails.fullName); if(n&&n.trim()){ allResumes[id].personalDetails.fullName=n.trim(); saveAllResumes(); renderManager(); if(currentCvId===id){cvData=allResumes[id];renderPreview();updatePaLabel();} showToast('Renamed','success'); } }
+function deleteResume(id)    { if(!confirm('Delete this resume?'))return; delete allResumes[id]; saveAllResumes(); renderManager(); if(currentCvId===id){const ids=Object.keys(allResumes); if(ids.length)setCurrentResume(ids[0]); else createNewResume();} showToast('Deleted','info'); }
+
+function navigate(view, opts={}) {
+    closeMobilePreview();
+    document.body.setAttribute('data-view', view);
+    if (view==='manager') renderManager();
+    if (view==='builder') { if(!cvData)loadData(); renderPreview(); setStep(currentStep); updatePaLabel(); }
+    if (view==='gallery') renderGallery();
+    if (view==='landing') { renderHeroCv(); renderShowcaseStrip(); }
+    window.scrollTo(0,0);
+    if (atsPanelOpen) { atsPanelOpen=false; document.getElementById('ats-panel').classList.remove('open'); }
+    closeTips();
+    document.getElementById('preview-area').classList.remove('preview-full');
+}
+
+function toggleTips() {
+    const modal = document.getElementById('tips-modal');
+    if (!modal) return;
+    modal.classList.toggle('open');
+    if (modal.classList.contains('open')) {
+        const stepTips = {
+            0:"Fill in your personal details and summary. Include a professional summary highlighting key strengths.",
+            1:"Add work experience. Use strong action verbs and quantify achievements. Drag bullets to reorder.",
+            2:"List education and certifications. Include relevant coursework and honours.",
+            3:"Add skills and languages. Group by proficiency level.",
+            4:"Add extra sections like projects, references, or interests.",
+            5:"Customise the design: template, accent colour, paper colour, and scale.",
+            6:"Use AI to improve bullets or summary, check ATS compatibility, or copy role-based suggestions."
+        };
+        const body = document.getElementById('tips-modal-body');
+        if (body) body.innerHTML = `<p>${stepTips[currentStep]||'Select a tab for tips.'}</p>`;
+    }
+}
+function closeTips() {
+    const modal = document.getElementById('tips-modal');
+    if (modal) modal.classList.remove('open');
+}
+
+function toggleMobilePreview() { isMobilePreviewOpen ? closeMobilePreview() : openMobilePreview(); }
+function openMobilePreview() {
+    isMobilePreviewOpen=true;
+    document.getElementById('preview-slide-overlay').classList.add('open');
+    const fab=document.getElementById('preview-fab'); fab.classList.add('active'); fab.textContent='✕';
+    renderMobilePreview();
+}
+function closeMobilePreview() {
+    isMobilePreviewOpen=false;
+    document.getElementById('preview-slide-overlay').classList.remove('open');
+    const fab=document.getElementById('preview-fab'); if(fab){fab.classList.remove('active');fab.textContent='👁';}
+}
+function renderMobilePreview() {
+    const body=document.getElementById('preview-slide-body');
+    if(!body||!cvData)return;
+    const el=document.createElement('div');
+    el.className='page'; el.setAttribute('data-template',currentTemplateId);
+    const ov=cvData.meta.themeOverrides;
+    el.style.setProperty('--color-accent', ov.primaryColor||getTemplateDefaultColor(currentTemplateId));
+    if(ov.paperColor) el.style.setProperty('--color-paper',ov.paperColor); else el.style.removeProperty('--color-paper');
+    el.style.setProperty('--scale',ov.fontSizeScale||1);
+    el.style.setProperty('--spacing',ov.spacingScale||1);
+    el.innerHTML = renderTemplate(currentTemplateId, cvData);
+    body.innerHTML='';
+    body.appendChild(el);
+    requestAnimationFrame(scaleMobilePreviewToFit);
+}
+function updateMobilePreview() { if(isMobilePreviewOpen)renderMobilePreview(); }
+
+
+
+function scalePageToFit(wrapper, page) {
+    if (!wrapper || !page) return;
+    page.style.transform = 'scale(1)';
+    page.style.transformOrigin = 'top left';
+    const ww = wrapper.getBoundingClientRect().width;
+    const wh = wrapper.getBoundingClientRect().height;
+    const pw = page.getBoundingClientRect().width;
+    const ph = page.getBoundingClientRect().height;
+    if (!pw || !ph) return;
+    const scaleW = (ww - 20) / pw;
+    const scaleH = (wh - 20) / ph;
+    const scale = Math.min(scaleW, scaleH, 1.5);
+    if (scale < 0.99) {
+        page.style.transform = `scale(${scale})`;
+        page.style.marginBottom = `${page.getBoundingClientRect().height * (scale - 1)}px`;
+    } else {
+        page.style.marginBottom = '';
+    }
+}
+function scalePreviewToFit() {
+    scalePageToFit(
+        document.getElementById('preview-wrapper'),
+        document.getElementById('cv-root')
+    );
+}
+function scaleMobilePreviewToFit() {
+    const body = document.getElementById('preview-slide-body');
+    const page = body ? body.querySelector('.page') : null;
+    scalePageToFit(body, page);
+}
+
+function renderPreview(pageEl) {
+    const el = pageEl || document.getElementById('cv-root');
+    if (!el) return;
+    const tid = currentTemplateId;
+    el.setAttribute('data-template', tid);
+    
+    el.innerHTML = renderTemplateContent(cvData, tid);
+    
+    const ov = cvData.meta.themeOverrides;
+    const accentColor = ov.primaryColor || getTemplateDefaultColor(tid);
+    el.style.setProperty('--color-accent', accentColor);
+    if (ov.paperColor) el.style.setProperty('--color-paper', ov.paperColor);
+    else el.style.removeProperty('--color-paper');
+    el.style.setProperty('--scale', ov.fontSizeScale || 1);
+    el.style.setProperty('--spacing', ov.spacingScale || 1);
+    
+    updateMobilePreview();
+    requestAnimationFrame(scalePreviewToFit);
+}
+
+function getTemplateDefaultColor(tid) {
+    const map = {
+        "modern-01":"#2F6F63","modern-02":"#3B5BA9","modern-03":"#B2562F",
+        "ats-01":"#222222","ats-02":"#1B2A4A","ats-03":"#4A3728","ats-04":"#264D3B",
+        "executive-01":"#1B2A4A","executive-02":"#C9A84C",
+        "creative-01":"#C1447E",
+        "split-01":"#2F6F63","split-02":"#3B5BA9","split-03":"#C1447E","split-04":"#3D3D3D",
+        "timeline-01":"#2F6F63","timeline-02":"#3D3D3D","timeline-03":"#1B2A4A",
+        "combined-01":"#2F6F63","combined-02":"#B2562F","combined-03":"#3B5BA9","combined-04":"#4A5E2F",
+        "practical-01":"#2F6F63","practical-02":"#1B2A4A","practical-03":"#3D3D3D",
+        "functional-01":"#2F6F63","functional-02":"#3B5BA9","functional-03":"#B08D2E",
+        "trade-01":"#1B3A4B","trade-02":"#7A3A1B","trade-03":"#2C2C2C",
+        "starter-01":"#2F8A6E","starter-02":"#7A3A1B","starter-03":"#2E5E88",
+        "mono-01":"#8C7A5E","mono-02":"#4A6741","mono-03":"#3B5BA9",
+        "facet-01":"#B5654A","facet-02":"#1B5E56","facet-03":"#6B3E8E","facet-04":"#7A5C2E",
+        "duo-01":"#A06060","duo-02":"#4A6B4A","duo-03":"#6B6860"
+    };
+    return map[tid] || "#2F6F63";
+}
+
+function contactListHtml(p){ const items=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url,label:l.label}))]; return items.filter(i=>i.val).map(i=>`<li><span class="icon-inline">${icoSVG(i.icon)}</span>${i.label?`<a href="${escHtml(i.val)}">${escHtml(i.label)}</a>`:escHtml(i.val)}</li>`).join(""); }
+function atsContactLine(p){ const items=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url}))]; return items.filter(i=>i.val).map(i=>`<span class="contact-inline-item"><span class="icon-inline">${icoSVG(i.icon)}</span>${escHtml(i.val)}</span>`).join('<span class="contact-inline-item" style="opacity:.4">|</span>'); }
+
+function setStep(n) {
+    currentStep = n;
+    document.querySelectorAll('.ep-tab').forEach(t => t.classList.toggle('active', +t.dataset.step === n));
+    document.getElementById('ep-body').innerHTML = stepContent(n);
+    wireStepEvents();
+}
+function stepContent(n) {
+    if (!cvData) return "";
+    switch (n) {
+        case 0: return stepPersonal(cvData.personalDetails);
+        case 1: return stepSection("experience");
+        case 2: return stepSection("education") + stepSection("projects");
+        case 3: return stepSection("skills") + stepSection("languages") + stepSection("certificates");
+        case 4: return stepSection("custom") + stepSection("strengths") + stepSection("interests") + stepSection("references") + stepSection("personal-info");
+        case 5: return stepDesign();
+        case 6: return stepAI();
+        default: return "";
+    }
+}
+function stepPersonal(p) {
+        const wc = (p.summary || "").trim().split(/\s+/).filter(Boolean).length;
+        const cls = wc >= 40 && wc <= 80 ? "good" : wc > 80 ? "bad" : "warn";
+        return `
+        <p class="ep-sh">Personal Details</p>
+        <div class="photo-row">
+            <div class="photo-ring">${p.photo ? `<img src="${p.photo}" alt="Photo">` : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`}</div>
+            <div class="photo-actions">
+                <p>Profile photo (optional)</p>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn-upload" onclick="document.getElementById('photo-upload').click()">Upload Photo</button>
+                    ${p.photo ? `<button class="btn-photo-rm" onclick="removePhoto()">Remove</button>` : ""}
+                </div>
+            </div>
+        </div>
+        <input type="file" id="photo-upload" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+        <div class="f"><label>Full Name</label><input value="${escHtml(p.fullName)}" oninput="updatePD('fullName',this.value)"></div>
+        <div class="f"><label>Job Title / Target Role</label><input value="${escHtml(p.jobTitle)}" oninput="updatePD('jobTitle',this.value)"></div>
+        <div class="f-row">
+            <div class="f"><label>Email</label><input type="email" value="${escHtml(p.email)}" oninput="updatePD('email',this.value)"></div>
+            <div class="f"><label>Phone</label><input type="tel" value="${escHtml(p.phone)}" oninput="updatePD('phone',this.value)"></div>
+        </div>
+        <div class="f"><label>Location</label><input value="${escHtml(p.location)}" oninput="updatePD('location',this.value)"></div>
+        <div class="f">
+            <div class="f-hd">
+                <label>Professional Summary</label>
+                <span class="word-count ${cls}">${wc} words</span>
+            </div>
+            <textarea rows="4" oninput="updatePD('summary',this.value);updateWordCount(this)">${escHtml(p.summary)}</textarea>
+            ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your experience level, key skills, and what you bring.</div>` : ""}
+        </div>
+        <p class="ep-sh">Links (optional)</p>
+        ${(p.links || []).map((l, i) => `
+        <div class="f-row">
+            <div class="f"><label>Label</label><input value="${escHtml(l.label)}" oninput="updateLink(${i},'label',this.value)" placeholder="e.g. LinkedIn"></div>
+            <div class="f"><label>URL</label><input value="${escHtml(l.url)}" oninput="updateLink(${i},'url',this.value)" placeholder="https://"></div>
+            <button class="btn-del" style="align-self:flex-end;margin-bottom:8px" onclick="removeLink(${i})">✕</button>
+        </div>`).join("")}
+        <button class="btn-add" onclick="addLink()">+ Add Link</button>`;
+    }
+
+    function stepSection(type) {
+        const sec = cvData.sections.find(s => s.type === type);
+        if (!sec) return `<button class="btn-add" onclick="addSection('${type}')">+ Add ${humanType(type)} section</button>`;
+        const vis = sec.visible;
+        let itemsHtml = "";
+        if (type === "experience")    itemsHtml = sec.items.map((it, i) => expCard(it, i)).join("");
+        if (type === "education")     itemsHtml = sec.items.map((it, i) => eduCard(it, i)).join("");
+        if (type === "projects")      itemsHtml = sec.items.map((it, i) => projCard(it, i)).join("");
+        if (type === "custom")        itemsHtml = sec.items.map((it, i) => customCard(it, i)).join("");
+        if (type === "skills")        itemsHtml = sec.items.map((it, i) => skillCard(it, i)).join("");
+        if (type === "languages")     itemsHtml = sec.items.map((it, i) => langCard(it, i)).join("");
+        if (type === "certificates")  itemsHtml = sec.items.map((it, i) => certCard(it, i)).join("");
+        if (type === "references")    itemsHtml = sec.items.map((it, i) => refCard(it, i)).join("");
+        if (type === "interests")     itemsHtml = sec.items.map((it, i) => interestCard(it, i)).join("");
+        if (type === "strengths")     itemsHtml = sec.items.map((it, i) => strengthCard(it, i)).join("");
+        if (type === "personal-info") itemsHtml = sec.items.map((it, i) => piCard(it, i)).join("");
+        return `
+        <div class="sb-hd">
+            <span class="t">${escHtml(sec.title)}</span>
+            <div class="sb-ctrls">
+                <button class="btn-vis ${vis ? "on" : ""}" onclick="toggleSecVis('${type}')">${vis ? "Shown" : "Hidden"}</button>
+                <button class="btn-ico" onclick="moveSec('${type}',-1)" title="Move up">↑</button>
+                <button class="btn-ico" onclick="moveSec('${type}',1)" title="Move down">↓</button>
+                <button class="btn-ico" onclick="renameSection('${type}')" title="Rename">✏️</button>
+            </div>
+        </div>
+        <div id="items-${type}">${itemsHtml}</div>
+        <button class="btn-add" onclick="addItem('${type}')">+ Add ${humanType(type)}</button>`;
+    }
+
+    function humanType(t) {
+        const m = { experience:"Experience", education:"Education", projects:"Project", custom:"Activity", skills:"Skill", languages:"Language", certificates:"Certificate", references:"Reference", interests:"Interests", strengths:"Strength", "personal-info":"Info" };
+        return m[t] || t;
+    }
+
+    function datePicker(prefix, field, value) {
+        const months = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const [y, m] = (value || "").split("-");
+        const yearOpts = ["<option value=''>Year</option>"];
+        for (let yr = new Date().getFullYear() + 2; yr >= 1970; yr--) {
+            yearOpts.push(`<option value="${yr}" ${yr == y ? "selected" : ""}>${yr}</option>`);
+        }
+        const monthOpts = months.map((mn, idx) =>
+            idx === 0 ? "<option value=''>Month</option>" : `<option value="${String(idx).padStart(2,'0')}" ${String(idx).padStart(2,'0') === m ? "selected" : ""}>${mn}</option>`
+        ).join("");
+        return `<div class="date-picker"><select onchange="updateDateField('${prefix}','${field}','year',this.value)">${yearOpts.join("")}</select><select onchange="updateDateField('${prefix}','${field}','month',this.value)">${monthOpts}</select></div>`;
+    }
+
+    function expCard(it, i) {
+        const bullets = it.bullets || [];
+        const hasWeak = bullets.some(b => b.length > 0 && b.length < 30);
+        return `
+        <div class="icard" draggable="true" data-type="experience" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.role || "New Role")}</span>
+                <button class="btn-del" onclick="delItem('experience',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Job Title</label><input value="${escHtml(it.role)}" oninput="updateItem('experience',${i},'role',this.value)"></div>
+            <div class="f-row">
+                <div class="f"><label>Company</label><input value="${escHtml(it.company)}" oninput="updateItem('experience',${i},'company',this.value)"></div>
+                <div class="f"><label>Location</label><input value="${escHtml(it.location)}" oninput="updateItem('experience',${i},'location',this.value)"></div>
+            </div>
+            <div class="f-row">
+                <div class="f"><label>Start Date</label>${datePicker(`experience-${i}`, "startDate", it.startDate)}</div>
+                <div class="f"><label>End Date</label>${it.current ? "<p style='font-size:12px;color:var(--accent);padding-top:8px'>Present</p>" : datePicker(`experience-${i}`, "endDate", it.endDate)}</div>
+            </div>
+            <div class="f-check"><label><input type="checkbox" ${it.current ? "checked" : ""} onchange="updateItem('experience',${i},'current',this.checked);setStep(1)"> Currently working here</label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
+                <label style="font-size:11px;font-weight:600;color:var(--t2)">Bullet Points</label>
+                <button class="btn-ai" onclick="aiImprove('experience',${i})" ${bullets.length ? "" : "disabled"}>✨ AI Improve</button>
+            </div>
+            ${hasWeak ? `<div class="weak-hint">💡 Some bullets are short. Add specific achievements and numbers for more impact.</div>` : ""}
+            <div class="bullet-list" id="bullets-experience-${i}">${bullets.map((b, j) => bulletRow(b, j, "experience", i)).join("")}</div>
+            <button class="btn-add" style="margin-top:0" onclick="addBullet('experience',${i})">+ Add bullet</button>
+        </div>`;
+    }
+
+    function eduCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="education" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.qualification || "New Qualification")}</span>
+                <button class="btn-del" onclick="delItem('education',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Qualification</label><input value="${escHtml(it.qualification)}" oninput="updateItem('education',${i},'qualification',this.value)"></div>
+            <div class="f-row">
+                <div class="f"><label>Institution</label><input value="${escHtml(it.institution)}" oninput="updateItem('education',${i},'institution',this.value)"></div>
+                <div class="f"><label>Location</label><input value="${escHtml(it.location)}" oninput="updateItem('education',${i},'location',this.value)"></div>
+            </div>
+            <div class="f-row">
+                <div class="f"><label>Start Date</label>${datePicker(`education-${i}`, "startDate", it.startDate)}</div>
+                <div class="f"><label>End Date</label>${it.current ? "<p style='font-size:12px;color:var(--accent);padding-top:8px'>Present</p>" : datePicker(`education-${i}`, "endDate", it.endDate)}</div>
+            </div>
+            <div class="f-check"><label><input type="checkbox" ${it.current ? "checked" : ""} onchange="updateItem('education',${i},'current',this.checked);setStep(2)"> Currently studying</label></div>
+            <div class="f"><label>Notes (honours, distinctions, coursework)</label><textarea rows="2" oninput="updateItem('education',${i},'notes',this.value)">${escHtml(it.notes)}</textarea></div>
+        </div>`;
+    }
+
+    function projCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="projects" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.name || "New Project")}</span>
+                <button class="btn-del" onclick="delItem('projects',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Project Name</label><input value="${escHtml(it.name)}" oninput="updateItem('projects',${i},'name',this.value)"></div>
+            <div class="f"><label>URL (optional)</label><input value="${escHtml(it.url)}" oninput="updateItem('projects',${i},'url',this.value)" placeholder="https://"></div>
+            <div class="f-row">
+                <div class="f"><label>Start Date</label>${datePicker(`projects-${i}`, "startDate", it.startDate)}</div>
+                <div class="f"><label>End Date</label>${datePicker(`projects-${i}`, "endDate", it.endDate)}</div>
+            </div>
+            <label style="font-size:11px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px">Bullet Points</label>
+            <div class="bullet-list" id="bullets-projects-${i}">${(it.bullets || []).map((b, j) => bulletRow(b, j, "projects", i)).join("")}</div>
+            <button class="btn-add" style="margin-top:0" onclick="addBullet('projects',${i})">+ Add bullet</button>
+        </div>`;
+    }
+
+    function customCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="custom" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.title || "Activity")}</span>
+                <button class="btn-del" onclick="delItem('custom',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Title</label><input value="${escHtml(it.title)}" oninput="updateItem('custom',${i},'title',this.value)"></div>
+            <label style="font-size:11px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px">Bullet Points</label>
+            <div class="bullet-list" id="bullets-custom-${i}">${(it.bullets || []).map((b, j) => bulletRow(b, j, "custom", i)).join("")}</div>
+            <button class="btn-add" style="margin-top:0" onclick="addBullet('custom',${i})">+ Add bullet</button>
+        </div>`;
+    }
+
+    function skillCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="skills" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.name || "Skill")}</span>
+                <button class="btn-del" onclick="delItem('skills',${i})">Delete</button>
+            </div>
+            <div class="f-row">
+                <div class="f"><label>Skill</label><input value="${escHtml(it.name)}" oninput="updateItem('skills',${i},'name',this.value)"></div>
+                <div class="f"><label>Level</label>
+                    <select onchange="updateItem('skills',${i},'level',this.value)">
+                        ${["Basic","Intermediate","Proficient","Advanced","Expert"].map(l => `<option ${it.level===l?"selected":""}>${l}</option>`).join("")}
+                    </select>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function langCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="languages" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.name || "Language")}</span>
+                <button class="btn-del" onclick="delItem('languages',${i})">Delete</button>
+            </div>
+            <div class="f-row">
+                <div class="f"><label>Language</label><input value="${escHtml(it.name)}" oninput="updateItem('languages',${i},'name',this.value)"></div>
+                <div class="f"><label>Level</label>
+                    <select onchange="updateItem('languages',${i},'level',this.value)">
+                        ${["Basic","Conversational","Intermediate","Fluent","Native"].map(l => `<option ${it.level===l?"selected":""}>${l}</option>`).join("")}
+                    </select>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function certCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="certificates" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.name || "Certificate")}</span>
+                <button class="btn-del" onclick="delItem('certificates',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Certificate / Credential</label><input value="${escHtml(it.name)}" oninput="updateItem('certificates',${i},'name',this.value)"></div>
+        </div>`;
+    }
+
+    function refCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="references" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.name || "Reference")}</span>
+                <button class="btn-del" onclick="delItem('references',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Name</label><input value="${escHtml(it.name)}" oninput="updateItem('references',${i},'name',this.value)"></div>
+            <div class="f"><label>Title / Company</label><input value="${escHtml(it.title)}" oninput="updateItem('references',${i},'title',this.value)"></div>
+            <div class="f-row">
+                <div class="f"><label>Phone</label><input value="${escHtml(it.phone)}" oninput="updateItem('references',${i},'phone',this.value)"></div>
+                <div class="f"><label>Email</label><input value="${escHtml(it.email)}" oninput="updateItem('references',${i},'email',this.value)"></div>
+            </div>
+        </div>`;
+    }
+
+    function interestCard(it, i) {
+        return `
+        <div class="icard" data-type="interests" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">Interests</span>
+                <button class="btn-del" onclick="delItem('interests',${i})">Delete</button>
+            </div>
+            <div class="f"><label>Interests (free text)</label><textarea rows="2" oninput="updateItem('interests',${i},'value',this.value)">${escHtml(it.value)}</textarea></div>
+        </div>`;
+    }
+
+    function strengthCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="strengths" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.value || "Strength")}</span>
+                <button class="btn-del" onclick="delItem('strengths',${i})">Delete</button>
+            </div>
+            <div class="f"><input value="${escHtml(it.value)}" oninput="updateItem('strengths',${i},'value',this.value)" placeholder="e.g. Reliable"></div>
+        </div>`;
+    }
+
+    function piCard(it, i) {
+        return `
+        <div class="icard" draggable="true" data-type="personal-info" data-idx="${i}">
+            <div class="icard-top">
+                <span class="icard-lbl">${escHtml(it.label || "Detail")}</span>
+                <button class="btn-del" onclick="delItem('personal-info',${i})">Delete</button>
+            </div>
+            <div class="f-row">
+                <div class="f"><label>Label</label><input value="${escHtml(it.label)}" oninput="updateItem('personal-info',${i},'label',this.value)" placeholder="e.g. Date of Birth"></div>
+                <div class="f"><label>Value</label><input value="${escHtml(it.value)}" oninput="updateItem('personal-info',${i},'value',this.value)"></div>
+            </div>
+        </div>`;
+    }
+
+    function bulletRow(b, j, type, i) {
+        return `<div class="bullet-row" draggable="true" data-btype="${type}" data-bidx="${i}" data-bj="${j}">
+            <span class="bullet-dot">•</span>
+            <input class="bullet-input" value="${escHtml(b)}" oninput="updateBullet('${type}',${i},${j},this.value)" placeholder="Describe what you did and the impact…">
+            <button class="bullet-rm" onclick="removeBullet('${type}',${i},${j})">✕</button>
+        </div>`;
+    }
+
+    function stepDesign() {
+        const ov = cvData.meta.themeOverrides || {};
+        const cats = [...new Set(TEMPLATE_CONFIGS.map(t => t.cat))];
+        let tmplHtml = "";
+        cats.forEach(cat => {
+            const group = TEMPLATE_CONFIGS.filter(t => t.cat === cat);
+            tmplHtml += `<p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin:10px 0 5px">${cat}</p>
+            <div class="tmpl-mini-grid">${group.map(t =>
+                `<div class="tmpl-mini ${currentTemplateId===t.id?"sel":""}" onclick="selectTemplate('${t.id}')">
+                    <div class="tmpl-mini-t">${SVGS[t.id]}</div>
+                    <div class="tmpl-mini-n">${t.name}</div>
+                </div>`).join("")}</div>`;
+        });
+        const currentAccent  = ov.primaryColor  || getTemplateDefaultColor(currentTemplateId);
+        const currentPaper   = ov.paperColor    || "";
+        const currentScale   = ov.fontSizeScale || 1;
+        const currentSpacing = ov.spacingScale  || 1;
+        return `
+        <div class="design-sec">
+            <p class="design-t">Template</p>
+            <div style="max-height:300px;overflow-y:auto;padding-right:2px">${tmplHtml}</div>
+        </div>
+        <div class="design-sec">
+            <p class="design-t">Accent Colour</p>
+            <div class="c-swatches">
+                ${ACCENT_COLORS.map(c => `<button class="c-sw ${currentAccent===c.v?"active":""}" style="background:${c.v}" title="${c.label}" onclick="setAccentColor('${c.v}')"></button>`).join("")}
+                <label title="Custom colour" style="cursor:pointer">
+                    <div class="c-sw" style="background:${currentAccent};border-style:dashed"></div>
+                    <input type="color" value="${currentAccent}" style="display:none" oninput="setAccentColor(this.value)">
+                </label>
+            </div>
+        </div>
+        <div class="design-sec">
+            <p class="design-t">Paper Colour</p>
+            <div class="c-swatches">
+                ${PAPER_COLORS.map(c => `<button class="paper-sw ${currentPaper===c?"active":""}" style="background:${c}" onclick="setPaperColor('${c}')"></button>`).join("")}
+                <button class="paper-sw ${!currentPaper?"active":""}" style="background:#fff;border-style:dashed" onclick="setPaperColor('')" title="Default">↺</button>
+            </div>
+        </div>
+        <div class="design-sec">
+            <p class="design-t">Font Size</p>
+            <div class="scale-row">
+                ${[[0.85,"S"],[0.92,"M−"],[1,"M"],[1.08,"M+"],[1.15,"L"]].map(([v,l]) =>
+                    `<button class="sc-btn ${currentScale==v?"active":""}" onclick="setScale(${v})">${l}</button>`).join("")}
+            </div>
+        </div>
+        <div class="design-sec">
+            <p class="design-t">Spacing</p>
+            <div class="scale-row">
+                ${[[0.85,"Compact"],[1,"Normal"],[1.15,"Airy"]].map(([v,l]) =>
+                    `<button class="sc-btn ${currentSpacing==v?"active":""}" onclick="setSpacing(${v})">${l}</button>`).join("")}
+            </div>
+        </div>
+        <div class="reset-row">
+            <button class="btn-reset" onclick="resetDesign()">↺ Reset to template defaults</button>
+        </div>`;
+    }
+
+    function stepAI() {
+        return `
+        <p class="ep-sh">AI Writing Tools</p>
+        <div style="margin-bottom:12px">
+            <p style="font-size:12px;color:var(--t2);margin:0 0 8px;line-height:1.5">Use AI to strengthen your resume content:</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn btn-outline btn-sm" style="justify-content:flex-start" onclick="aiImproveSummary()">✨ Improve my summary</button>
+                <button class="btn btn-outline btn-sm" style="justify-content:flex-start" onclick="aiSuggestBullets()">💡 Suggest stronger bullet points</button>
+                <button class="btn btn-outline btn-sm" style="justify-content:flex-start" onclick="aiCheckATS()">📊 Full ATS analysis</button>
+            </div>
+        </div>
+        <p class="ep-sh">ATS Keyword Match</p>
+        <div class="ats-jd">
+            <label>Paste a job description to check keyword match:</label>
+            <textarea rows="4" placeholder="Paste job description here…" oninput="targetJD=this.value">${escHtml(targetJD)}</textarea>
+            <p class="ats-note">Tip: copy the full job posting for best results.</p>
+            <button class="btn btn-primary btn-sm" style="width:100%" onclick="runATSCheck()">Run ATS Check</button>
+        </div>
+        <p class="ep-sh" style="margin-top:16px">Role-Based Suggestions</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+            ${["Software Dev","Marketing","Admin","Sales","Finance","Design","Healthcare","Education"].map(r =>
+                `<button class="btn btn-outline btn-sm" onclick="aiRoleSuggestions('${r}')">${r}</button>`).join("")}
+        </div>
+        <div id="ai-output" style="font-size:12px;color:var(--t2);line-height:1.6;min-height:40px"></div>`;
+    }
+
+    function wireStepEvents() {
+        document.querySelectorAll('.icard[draggable="true"]').forEach(card => {
+            card.addEventListener('dragstart', e => { card.classList.add('dragging'); e.dataTransfer.setData('text/plain', JSON.stringify({ type: card.dataset.type, idx: +card.dataset.idx })); });
+            card.addEventListener('dragend',   () => card.classList.remove('dragging'));
+            card.addEventListener('dragover',  e => { e.preventDefault(); card.classList.add('drag-over'); });
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+            card.addEventListener('drop', e => {
+                e.preventDefault(); card.classList.remove('drag-over');
+                const from = JSON.parse(e.dataTransfer.getData('text/plain'));
+                if (from.type === card.dataset.type && from.idx !== +card.dataset.idx)
+                    reorderItem(from.type, from.idx, +card.dataset.idx);
+            });
+        });
+        document.querySelectorAll('.bullet-row[draggable="true"]').forEach(row => {
+            row.addEventListener('dragstart', e => { row.classList.add('dragging'); e.dataTransfer.setData('text/plain', JSON.stringify({ btype: row.dataset.btype, bidx: +row.dataset.bidx, bj: +row.dataset.bj })); });
+            row.addEventListener('dragend',   () => row.classList.remove('dragging'));
+            row.addEventListener('dragover',  e => { e.preventDefault(); row.classList.add('drag-over'); });
+            row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+            row.addEventListener('drop', e => {
+                e.preventDefault(); row.classList.remove('drag-over');
+                const from = JSON.parse(e.dataTransfer.getData('text/plain'));
+                if (from.btype === row.dataset.btype && from.bidx === +row.dataset.bidx && from.bj !== +row.dataset.bj)
+                    reorderBullet(from.btype, from.bidx, from.bj, +row.dataset.bj);
+            });
+        });
+    }
+
+    // ---------- DATA MUTATIONS ----------
+    function updatePD(field, val)    { setP(cvData.personalDetails, field, val); renderPreview(); autoSave(); }
+    function updateWordCount(ta) {
+        const wc = ta.value.trim().split(/\s+/).filter(Boolean).length;
+        const el = ta.closest('.f').querySelector('.word-count');
+        if (el) { el.textContent = `${wc} words`; el.className = `word-count ${wc>=40&&wc<=80?"good":wc>80?"bad":"warn"}`; }
+    }
+    function addLink()               { if (!cvData.personalDetails.links) cvData.personalDetails.links = []; cvData.personalDetails.links.push({ label:"", url:"" }); renderPreview(); setStep(0); autoSave(); }
+    function removeLink(i)           { cvData.personalDetails.links.splice(i, 1); renderPreview(); setStep(0); autoSave(); }
+    function updateLink(i, field, v) { cvData.personalDetails.links[i][field] = v; renderPreview(); autoSave(); }
+    function removePhoto()           { cvData.personalDetails.photo = null; renderPreview(); setStep(0); autoSave(); }
+    function handlePhotoUpload(input) {
+        const file = input.files[0]; if (!file) return;
+        const r = new FileReader();
+        r.onload = e => { cvData.personalDetails.photo = e.target.result; renderPreview(); setStep(0); autoSave(); };
+        r.readAsDataURL(file);
+    }
+    function updateItem(type, i, field, val) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        setP(sec.items[i], field, val); renderPreview(); autoSave();
+    }
+    function delItem(type, i) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        sec.items.splice(i, 1); renderPreview(); setStep(currentStep); autoSave();
+    }
+    function addItem(type) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        sec.items.push(BLANK[type]()); renderPreview(); setStep(currentStep); autoSave();
+        setTimeout(() => { const cards = document.querySelectorAll(`.icard[data-type="${type}"]`); if (cards.length) cards[cards.length-1].scrollIntoView({ behavior:"smooth", block:"center" }); }, 100);
+    }
+    function addSection(type) {
+        if (cvData.sections.find(s => s.type === type)) return;
+        const maxOrder = Math.max(0, ...cvData.sections.map(s => s.order));
+        cvData.sections.push({ type, title: humanType(type), visible: true, order: maxOrder + 1, items: [] });
+        renderPreview(); setStep(currentStep); autoSave();
+    }
+    function reorderItem(type, fromIdx, toIdx) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        const [moved] = sec.items.splice(fromIdx, 1); sec.items.splice(toIdx, 0, moved);
+        renderPreview(); setStep(currentStep); autoSave();
+    }
+    function toggleSecVis(type) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        sec.visible = !sec.visible; renderPreview(); setStep(currentStep); autoSave();
+    }
+    function moveSec(type, dir) {
+        const secs = cvData.sections; const sec = secs.find(s => s.type === type); if (!sec) return;
+        const sorted = [...secs].sort((a, b) => a.order - b.order);
+        const idx = sorted.indexOf(sec); const target = sorted[idx + dir]; if (!target) return;
+        const tmp = sec.order; sec.order = target.order; target.order = tmp;
+        renderPreview(); setStep(currentStep); autoSave();
+    }
+    function renameSection(type) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        const name = prompt("Section title:", sec.title);
+        if (name && name.trim()) { sec.title = name.trim(); renderPreview(); setStep(currentStep); autoSave(); }
+    }
+    function addBullet(type, i) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
+        if (!sec.items[i].bullets) sec.items[i].bullets = [];
+        sec.items[i].bullets.push(""); renderPreview(); setStep(currentStep); autoSave();
+        setTimeout(() => { const list = document.getElementById(`bullets-${type}-${i}`); if (list) { const inputs = list.querySelectorAll('.bullet-input'); if (inputs.length) inputs[inputs.length-1].focus(); } }, 80);
+    }
+    function updateBullet(type, i, j, val) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        sec.items[i].bullets[j] = val; renderPreview(); autoSave();
+    }
+    function removeBullet(type, i, j) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        sec.items[i].bullets.splice(j, 1); renderPreview(); setStep(currentStep); autoSave();
+    }
+    function reorderBullet(type, i, fromJ, toJ) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        const [moved] = sec.items[i].bullets.splice(fromJ, 1); sec.items[i].bullets.splice(toJ, 0, moved);
+        renderPreview(); setStep(currentStep); autoSave();
+    }
+    function updateDateField(prefix, field, part, val) {
+        const parts = prefix.split("-"); const i = parseInt(parts[parts.length - 1], 10);
+        const typeStr = parts.slice(0, -1).join("-");
+        const sec = cvData.sections.find(s => s.type === typeStr); if (!sec || !sec.items[i]) return;
+        const current = sec.items[i][field] || "";
+        const [y, m] = current.split("-");
+        const newY = part === "year"  ? val : (y || "");
+        const newM = part === "month" ? val : (m || "");
+        sec.items[i][field] = newY ? (newM ? `${newY}-${newM}` : newY) : "";
+        renderPreview(); autoSave();
+    }
+
+    function selectTemplate(id) { currentTemplateId = id; cvData.meta.templateId = id; cvData.meta.themeOverrides = cvData.meta.themeOverrides || {}; renderPreview(); setStep(5); updatePaLabel(); autoSave(); }
+    function setAccentColor(v)  { cvData.meta.themeOverrides = cvData.meta.themeOverrides || {}; cvData.meta.themeOverrides.primaryColor = v; renderPreview(); setStep(5); autoSave(); }
+    function setPaperColor(v)   { cvData.meta.themeOverrides = cvData.meta.themeOverrides || {}; if (v) cvData.meta.themeOverrides.paperColor = v; else delete cvData.meta.themeOverrides.paperColor; renderPreview(); setStep(5); autoSave(); }
+    function setScale(v)        { cvData.meta.themeOverrides = cvData.meta.themeOverrides || {}; cvData.meta.themeOverrides.fontSizeScale = v; renderPreview(); setStep(5); autoSave(); }
+    function setSpacing(v)      { cvData.meta.themeOverrides = cvData.meta.themeOverrides || {}; cvData.meta.themeOverrides.spacingScale = v; renderPreview(); setStep(5); autoSave(); }
+    function resetDesign()      { cvData.meta.themeOverrides = {}; currentTemplateId = cvData.meta.templateId || "modern-01"; renderPreview(); setStep(5); updatePaLabel(); autoSave(); }
+    function updatePaLabel()    { const el = document.getElementById('pa-tmpl-lbl'); if (!el) return; const t = TEMPLATE_CONFIGS.find(t => t.id === currentTemplateId); el.textContent = t ? `${t.name} · ${t.desc}` : currentTemplateId; }
+    function togglePreviewFull(){ document.getElementById('preview-area').classList.toggle('preview-full'); requestAnimationFrame(scalePreviewToFit); }
+
+    function toggleAtsPanel() { atsPanelOpen = !atsPanelOpen; const p = document.getElementById('ats-panel'); p.classList.toggle('open', atsPanelOpen); if (atsPanelOpen) renderAtsPanel(); }
+    function runATSCheck()    { atsPanelOpen = true; document.getElementById('ats-panel').classList.add('open'); renderAtsPanel(); }
+
+    function renderAtsPanel() {
+        const panel = document.getElementById('ats-panel'); if (!panel) return;
+        const checks = atsChecks();
+        const score = checks.filter(c => c.pass).length;
+        panel.innerHTML = `
+        <h2>ATS Readiness</h2>
+        <p class="ats-sc"><strong>${score}/${checks.length}</strong> checks passed</p>
+        ${checks.map(c => `
+        <div class="ats-chk ${c.pass?"pass":"fail"}">
+            <div class="ck-i">${c.pass?"✓":"✗"}</div>
+            <div><p class="ck-lb">${c.label}</p><p class="ck-wy">${c.why}</p></div>
+        </div>`).join("")}
+        ${targetJD
+            ? `<div style="margin-top:12px"><p style="font-size:11px;font-weight:700;color:var(--t2);margin:0 0 6px">Missing Keywords</p>${renderKeywordGap()}</div>`
+            : `<div class="ats-jd" style="margin-top:12px">
+                <label>Paste a job description for keyword analysis:</label>
+                <textarea rows="3" placeholder="Paste job description…" oninput="targetJD=this.value"></textarea>
+                <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px" onclick="renderAtsPanel()">Analyse</button>
+               </div>`}`;
+    }
+
+    function atsChecks() {
+        const p = cvData.personalDetails;
+        const expSec = cvData.sections.find(s => s.type === "experience");
+        const text   = buildResumeText();
+        return [
+            { pass: !!p.email,   label: "Contact email",   why: "ATS parsers require an email address." },
+            { pass: !!p.phone,   label: "Phone number",    why: "Recruiters need a direct contact number." },
+            { pass: (p.summary||"").trim().split(/\s+/).filter(Boolean).length >= 30, label: "Summary (30+ words)", why: "A summary helps ATS classify your profile." },
+            { pass: !!expSec && expSec.items.length > 0,   label: "Work experience",  why: "At least one role is expected by most ATS." },
+            { pass: expSec ? expSec.items.some(it => it.bullets && it.bullets.length >= 2) : false, label: "2+ bullets per job", why: "Bullets are scanned for keywords." },
+            { pass: expSec ? expSec.items.every(it => it.startDate) : false, label: "Dates on all roles", why: "ATS checks employment chronology." },
+            { pass: /[0-9]+/.test(text), label: "Quantified achievements", why: "Numbers improve ATS ranking. E.g. 'reduced costs by 20%'." },
+            { pass: !(/résumé|€|£|👍|🎯|★/.test(text)), label: "ATS-safe characters", why: "Emoji and special chars can break parsers." },
+            { pass: !!cvData.sections.find(s => s.type==="skills" && s.visible && s.items.length > 2), label: "Skills section (3+)", why: "Skills are the #1 ATS keyword match source." }
+        ];
+    }
+
+    function buildResumeText() {
+        const p = cvData.personalDetails;
+        let t = `${p.fullName} ${p.jobTitle} ${p.summary} ${p.email} ${p.phone}`;
+        cvData.sections.forEach(s => s.items.forEach(it => {
+            t += ` ${it.role||""} ${it.company||""} ${it.qualification||""} ${it.institution||""} ${it.name||""} ${it.title||""} ${it.value||""} ${(it.bullets||[]).join(" ")} ${it.notes||""}`;
+        }));
+        return t;
+    }
+
+    function renderKeywordGap() {
+        if (!targetJD.trim()) return "";
+        const stop = new Set("a an the and or but in on at to for of with is are was were be been have has had do does did will would could should may might this that these those i we you he she it they their our your my his her its".split(" "));
+        const jdWords = targetJD.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+        const cvText  = buildResumeText().toLowerCase();
+        const missing = [...new Set(jdWords)].filter(w => !stop.has(w) && !cvText.includes(w)).slice(0, 15);
+        if (!missing.length) return `<p style="font-size:11px;color:#16A34A">✅ Great keyword match! No obvious gaps found.</p>`;
+        return `<p style="font-size:11px;color:var(--t2);margin:0 0 6px">Words in the job description not found in your CV:</p><div style="display:flex;flex-wrap:wrap;gap:4px">${missing.map(w => `<span style="background:#FEF3C7;color:#92400E;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #FDE68A">${w}</span>`).join("")}</div>`;
+    }
+
+    // ---------- AI ----------
+async function callmellow(prompt, outputEl, onSuccess) {
+    outputEl.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:#1B2A4A;color:#fff;padding:8px 12px;border-radius:6px"><span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> Thinking...</div>`;
+    try {
+        const resp = await fetch("http://localhost:11434/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "qwen2.5", 
+                prompt: prompt,
+                stream: false
+            })
+        });
+        const data = await resp.json();
+        const text = data.response;
+        if (text) onSuccess(text);
+        else outputEl.innerHTML = `<p style="color:#DC2626;font-size:12px">No response received. Please try again.</p>`;
+    } catch (err) {
+        outputEl.innerHTML = `<p style="color:#DC2626;font-size:12px">Error: ${err.message}</p>`;
+    }
+}
+
+    function aiImproveSummary() {
+        const out = document.getElementById('ai-output'); if (!out) return;
+        const p = cvData.personalDetails;
+        callmellow(
+            `Improve this CV summary for a ${p.jobTitle||"professional"}. Make it punchy and specific, around 60 words. Return ONLY the improved text, nothing else.\n\nCurrent: "${p.summary}"`,
+            out,
+            text => {
+                out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Suggested summary:</p><div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:10px;margin-bottom:8px;line-height:1.6">${escHtml(text.trim())}</div><button class="btn btn-primary btn-sm" data-text="${escHtml(text.trim())}" onclick="cvData.personalDetails.summary=this.dataset.text;renderPreview();setStep(0);autoSave();showToast('Summary applied!','success')">Apply this summary</button>`;
+            }
+        );
+    }
+
+    function aiImprove(type, i) {
+        if (!document.getElementById('ai-output')) { setStep(6); setTimeout(() => aiImprove(type, i), 200); return; }
+        const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
+        const it = sec.items[i];
+        const bullets = (it.bullets || []).join("\n");
+        if (!bullets.trim()) { showToast("Add some bullet points first!", "info"); return; }
+        setStep(6);
+        const out = document.getElementById('ai-output');
+        callmellow(
+            `Improve these CV bullets for "${it.role || it.name || "this role"}". Strong action verbs, quantify where possible. Return ONLY improved bullets, one per line starting with -.\n\n${bullets}`,
+            out,
+            text => {
+                const improved = text.trim().split(/\n/).map(l => l.replace(/^[-•*]\s*/,"").trim()).filter(Boolean);
+                out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Improved bullets:</p><div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:10px;margin-bottom:8px">${improved.map(b=>`<p style="margin:2px 0;padding-left:12px">• ${escHtml(b)}</p>`).join("")}</div><button class="btn btn-primary btn-sm" onclick="applyBullets(this,'${type}',${i})" data-bullets='${JSON.stringify(improved).replace(/'/g,"&#39;")}'>Apply these bullets</button>`;
+            }
+        );
+    }
+
+    function applyBullets(btn, type, i) {
+        const bullets = JSON.parse(btn.dataset.bullets);
+        const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
+        sec.items[i].bullets = bullets; renderPreview(); setStep(currentStep); autoSave();
+        showToast("Bullets applied!", "success");
+    }
+
+    function aiSuggestBullets() {
+        const out = document.getElementById('ai-output'); if (!out) return;
+        const expSec = cvData.sections.find(s => s.type === "experience");
+        if (!expSec || !expSec.items.length) { out.innerHTML = `<p style="color:#B45309">Add at least one job under Experience first.</p>`; return; }
+        const it = expSec.items[0];
+        callmellow(
+            `Suggest 4 strong CV bullet points for someone who worked as "${it.role}" at "${it.company}". Action verbs, quantified where possible. Return ONLY the bullets, one per line starting with -.`,
+            out,
+            text => {
+                const bullets = text.trim().split(/\n/).map(l => l.replace(/^[-•*]\s*/,"").trim()).filter(Boolean);
+                out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Suggested bullets for "${escHtml(it.role)}":</p><div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:10px;margin-bottom:8px">${bullets.map(b=>`<p style="margin:2px 0;padding-left:12px">• ${escHtml(b)}</p>`).join("")}</div><button class="btn btn-primary btn-sm" onclick="applyBullets(this,'experience',0)" data-bullets='${JSON.stringify(bullets).replace(/'/g,"&#39;")}'>Apply these bullets</button>`;
+            }
+        );
+    }
+
+    function aiCheckATS() {
+        const out = document.getElementById('ai-output'); if (!out) return;
+        callmellow(
+            `Analyse this CV text for ATS compatibility. Give 5 specific, actionable tips as a numbered list. Be concise.\n\nCV:\n${buildResumeText().slice(0, 2000)}`,
+            out,
+            text => { out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">ATS Improvement Tips:</p><div style="background:#EFF6FF;border:1px solid #93C5FD;border-radius:6px;padding:10px;line-height:1.7">${escHtml(text.trim()).replace(/\n/g,"<br>")}</div>`; }
+        );
+    }
+
+    function aiRoleSuggestions(role) {
+        const out = document.getElementById('ai-output'); if (!out) return;
+        callmellow(
+            `List 5 important skills and 3 strong CV bullet examples for a ${role} role.\nFormat:\nSKILLS: skill1, skill2, skill3, skill4, skill5\nBULLETS:\n- bullet 1\n- bullet 2\n- bullet 3`,
+            out,
+            text => { out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Suggestions for ${escHtml(role)}:</p><div style="background:#F5F3FF;border:1px solid #C4B5FD;border-radius:6px;padding:10px;line-height:1.7">${escHtml(text.trim()).replace(/\n/g,"<br>")}</div>`; }
+        );
+    }
+
+function exportPDF() { window.print(); }
+
+window.addEventListener('beforeprint', () => {
+    const page = document.getElementById('cv-root');
+    if (page) {
+        page.style.transform = '';
+        page.style.marginBottom = '';
+    }
+});
+window.addEventListener('afterprint', () => {
+    scalePreviewToFit();
+});
+
+function shareResume() { }
+function loadSharedResume() { }
+
+let galleryFilter = "all";
+function setGalleryFilter(cat, btn) {
+    galleryFilter = cat;
+    document.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderGallery();
+}
+function renderGallery() {
+    const grid = document.getElementById('gallery-grid'); if (!grid) return;
+    const list = galleryFilter === "all" ? TEMPLATE_CONFIGS : TEMPLATE_CONFIGS.filter(t => t.cat === galleryFilter);
+    grid.innerHTML = list.map(t => `
+    <div class="g-card ${currentTemplateId===t.id?"selected":""}" onclick="pickGalleryTemplate('${t.id}')">
+        <div class="g-thumb">${SVGS[t.id]}</div>
+        <div class="g-info"><p class="g-name">${t.name}</p><p class="g-cat">${t.desc}</p></div>
+        <div class="g-overlay"><button class="btn btn-sm">Use This →</button></div>
+    </div>`).join("");
+}
+function pickGalleryTemplate(id) {
+    if (!cvData) loadData();
+    currentTemplateId = id; cvData.meta.templateId = id;
+    cvData.meta.themeOverrides = cvData.meta.themeOverrides || {};
+    renderPreview(); updatePaLabel(); autoSave(); navigate('builder');
+}
+
+function renderHeroCv() {
+    const inner = document.getElementById('hero-cv-inner'); if (!inner) return;
+    const page = document.createElement('div');
+    page.className = 'page'; page.setAttribute('data-template','modern-01');
+    page.style.cssText = 'width:794px;min-height:1123px;'; page.style.setProperty('--color-accent','#2F6F63');
+    const heroData = JSON.parse(document.getElementById('cv-data').textContent);
+    page.innerHTML = renderTemplate('modern-01', heroData);
+    inner.innerHTML = ''; inner.appendChild(page);
+}
+function renderShowcaseStrip() {
+    const strip = document.getElementById('sc-strip'); if (!strip) return;
+    strip.innerHTML = TEMPLATE_CONFIGS.slice(0, 14).map(t => `
+    <div class="sc-card" onclick="navigate('gallery')">
+        <div class="sc-thumb">${SVGS[t.id]}</div>
+        <div class="sc-name">${t.name}</div>
+        <div class="sc-cat">${t.cat}</div>
+    </div>`).join("");
+}
+
+let _resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(() => {
+        scalePreviewToFit();
+        if (isMobilePreviewOpen) scaleMobilePreviewToFit();
+        if (window.innerWidth >= 768 && isMobilePreviewOpen) {
+            closeMobilePreview();
+        }
+    }, 120);
+});
+
+// ---------- INIT ----------
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchAllTemplates(); 
+    loadData();
+    if (!loadSharedResume()) navigate('landing');
+    renderHeroCv();
+    renderShowcaseStrip();
+});
