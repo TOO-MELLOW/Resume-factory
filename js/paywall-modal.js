@@ -38,7 +38,7 @@
     pwPendingTemplateId = templateId;
     pwGoToStep("gate");
     document.getElementById("pw-email").value = "";
-    showPaywall();
+    window.showPaywall();
   }
 
   async function pwHandleSendCode() {
