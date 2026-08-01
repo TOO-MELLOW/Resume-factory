@@ -1,5 +1,5 @@
-window.addEventListener('error', e => alert('JS ERROR: ' + e.message));
-window.addEventListener('unhandledrejection', e => alert('PROMISE ERROR: ' + (e.reason?.message || e.reason)));
+window.addEventListener('error', e => console.error('JS ERROR:', e.message, e.error));
+window.addEventListener('unhandledrejection', e => console.error('PROMISE ERROR:', e.reason));
 
 const SUPABASE_URL = "https://mlhuidtekecxgeizgmyr.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_vNUa__bfq0gHRIObYNe0rQ_MgI8s09r";
@@ -8,7 +8,15 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function attemptDownload(documentType, templateId) {
   pwTrack("cv_download_attempted", { document_type: documentType, template_id: templateId });
-  const { data: { session } } = await supabase.auth.getSession();
+
+  let session = null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
+  } catch (e) {
+    console.error("getSession failed", e);
+  }
+
   if (session) {
     const paidResult = await tryPaidDownload(documentType, templateId, session.access_token);
     if (paidResult.allowed) {
