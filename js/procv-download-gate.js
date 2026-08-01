@@ -115,10 +115,11 @@ async function confirmOtp(email, code) {
   return { ok: true, unlocked: false };
 }
 
+
 async function renderAndDownload(documentType, templateId, meta) {
-  if (documentType === "cv") {
-    await exportPDFDirect();
-  }
+    if (documentType === "cv") {
+        await window.exportPDFDirect(); 
+    }
 }
 
 window.attemptDownload = attemptDownload;
