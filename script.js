@@ -1868,6 +1868,10 @@ async function callmellow(prompt, outputEl, onSuccess) {
 
 // Button calls this — goes through paywall gate
 function exportPDF() {
+    document.title = "CLICKED";
+    attemptDownload('cv', currentTemplateId);
+}
+function exportPDF() {
     attemptDownload('cv', currentTemplateId);
 }
 
