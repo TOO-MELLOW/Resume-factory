@@ -1,3 +1,6 @@
+window.addEventListener('error', e => alert('JS ERROR: ' + e.message));
+window.addEventListener('unhandledrejection', e => alert('PROMISE ERROR: ' + (e.reason?.message || e.reason)));
+
 const SUPABASE_URL = "https://mlhuidtekecxgeizgmyr.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_vNUa__bfq0gHRIObYNe0rQ_MgI8s09r";
 
