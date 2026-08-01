@@ -1857,7 +1857,9 @@ async function callmellow(prompt, outputEl, onSuccess) {
         );
     }
 
-function exportPDF() { window.print(); }
+function exportPDF() {
+  attemptDownload('cv', currentTemplateId);
+}
 
 window.addEventListener('beforeprint', () => {
     const page = document.getElementById('cv-root');
