@@ -776,3 +776,30 @@
 .duo2-fill { height: 100%; background: var(--color-accent); border-radius: 2px }
 .duo3-sidebar { }
 .duo3-main { background: #FCFBF9 }
+
+/* ==========================================================================
+   FIXES: Editor toggle, full-bleed preview, print adjustments
+   ========================================================================== */
+
+/* Hide editor panel when collapsed */
+.editor-collapsed .ep {
+    display: none !important;
+}
+
+/* Preview wrapper zero padding – no white borders around the CV in the viewer */
+.preview-wrapper {
+    padding: 0 !important;
+}
+
+/* In the preview toolbar, ensure the "Exit Full" button is always visible */
+.pa-tb .preview-close {
+    display: inline-flex !important;
+}
+
+/* Optional: full‑page print ensures background colors/images are printed */
+@media print {
+    .page {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
