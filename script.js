@@ -2024,3 +2024,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderHeroCv();
     renderShowcaseStrip();
 });
+
+window.exportPDFDirect = exportPDFDirect;
