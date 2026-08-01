@@ -130,7 +130,6 @@
       posthog.identify(data.session.user.id);
     }
     const status = await checkSessionStatus(data.session.access_token);
-    hidePaywall();
     if (status && status.credits_remaining > 0) {
       return { ok: true, unlocked: true };
     }
