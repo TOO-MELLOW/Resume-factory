@@ -7,29 +7,34 @@ const SUPABASE_ANON_KEY = "sb_publishable_vNUa__bfq0gHRIObYNe0rQ_MgI8s09r";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function attemptDownload(documentType, templateId) {
+  alert('2. attemptDownload started');
   pwTrack("cv_download_attempted", { document_type: documentType, template_id: templateId });
 
   let session = null;
   try {
     const { data } = await supabase.auth.getSession();
     session = data.session;
+    alert('3. getSession OK, session=' + (session ? 'yes' : 'no'));
   } catch (e) {
-    console.error("getSession failed", e);
+    alert('3-ERROR getSession threw: ' + e.message);
+    return;
   }
 
   if (session) {
     const paidResult = await tryPaidDownload(documentType, templateId, session.access_token);
     if (paidResult.allowed) {
-      pwTrack("cv_download_completed", { document_type: documentType, template_id: templateId, is_free: false });
       return renderAndDownload(documentType, templateId, { paid: true });
     }
   }
+
+  alert('4. calling tryFreeDownload now');
   const freeResult = await tryFreeDownload(documentType, templateId);
+  alert('5. tryFreeDownload returned: ' + JSON.stringify(freeResult));
+
   if (freeResult.allowed) {
-    pwTrack("cv_download_completed", { document_type: documentType, template_id: templateId, is_free: true });
     return renderAndDownload(documentType, templateId, { paid: false });
   }
-  pwTrack("paywall_shown", { document_type: documentType, template_id: templateId });
+  alert('6. showing paywall');
   if (window.pwOpenForDownload) {
     window.pwOpenForDownload(documentType, templateId);
   } else {
