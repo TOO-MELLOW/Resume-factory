@@ -171,14 +171,15 @@
         body: JSON.stringify({ package: pwSelectedPackage }),
       });
       const data = await res.json();
-    if (!res.ok || !data.redirect_url) {
-      throw new Error("status " + res.status + ": " + JSON.stringify(data));
+      if (!res.ok || !data.redirect_url) {
+        throw new Error("status " + res.status + ": " + JSON.stringify(data));
+      }
+      window.location.href = data.redirect_url;
+    } catch (e) {
+      console.error("payment initiate failed", e);
+      pwSetLoading("pw-continue-payment-btn", false, "Redirecting…", "Continue to payment");
+      pwShowError("pw-buy-err", "DEBUG: " + e.message);
     }
-    window.location.href = data.redirect_url;
-  } catch (e) {
-    console.error("payment initiate failed", e);
-    pwSetLoading("pw-continue-payment-btn", false, "Redirecting…", "Continue to payment");
-    pwShowError("pw-buy-err", "DEBUG: " + e.message);
   }
 
   window.pwOpenForDownload = pwOpenForDownload;
@@ -190,4 +191,3 @@
   window.pwHandleContinueToPayment = pwHandleContinueToPayment;
   window.pwSelectPackage = pwSelectPackage;
 })();
-}
