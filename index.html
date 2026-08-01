@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+window.addEventListener('error', function(e){
+  alert('GLOBAL JS ERROR: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
+});
+window.addEventListener('unhandledrejection', function(e){
+  alert('UNHANDLED PROMISE ERROR: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+});
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Mellow CV FACTORY| Professional Resume Builder</title>
