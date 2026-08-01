@@ -171,15 +171,14 @@
         body: JSON.stringify({ package: pwSelectedPackage }),
       });
       const data = await res.json();
-      if (!res.ok || !data.redirect_url) {
-        throw new Error(data.error || "unknown_error");
-      }
-      window.location.href = data.redirect_url;
-    } catch (e) {
-      console.error("payment initiate failed", e);
-      pwSetLoading("pw-continue-payment-btn", false, "Redirecting…", "Continue to payment");
-      pwShowError("pw-buy-err", "Could not start payment. Please try again.");
+    if (!res.ok || !data.redirect_url) {
+      throw new Error("status " + res.status + ": " + JSON.stringify(data));
     }
+    window.location.href = data.redirect_url;
+  } catch (e) {
+    console.error("payment initiate failed", e);
+    pwSetLoading("pw-continue-payment-btn", false, "Redirecting…", "Continue to payment");
+    pwShowError("pw-buy-err", "DEBUG: " + e.message);
   }
 
   window.pwOpenForDownload = pwOpenForDownload;
