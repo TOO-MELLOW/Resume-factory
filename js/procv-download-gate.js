@@ -115,9 +115,9 @@ async function confirmOtp(email, code) {
   return { ok: true, unlocked: false };
 }
 
-function renderAndDownload(documentType, templateId, meta) {
+async function renderAndDownload(documentType, templateId, meta) {
   if (documentType === "cv") {
-    window.print();
+    await exportPDFDirect();
   }
 }
 
