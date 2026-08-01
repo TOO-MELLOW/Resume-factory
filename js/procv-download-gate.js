@@ -10,6 +10,7 @@
   // (e.g. procv-analytics.js) also needs Supabase access.
   const supabase = window.mellowSupabase || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window.mellowSupabase = supabase; // shared instance — other files should read this, not create their own
+  window.MELLOW_SUPABASE_URL = SUPABASE_URL; // so other files can build API URLs without redeclaring it
 
   async function attemptDownload(documentType, templateId) {
     alert('2. attemptDownload started');
