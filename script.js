@@ -1703,6 +1703,15 @@ function stepPersonal(p) {
     function setSpacing(v)      { cvData.meta.themeOverrides = cvData.meta.themeOverrides || {}; cvData.meta.themeOverrides.spacingScale = v; renderPreview(); setStep(5); autoSave(); }
     function resetDesign()      { cvData.meta.themeOverrides = {}; currentTemplateId = cvData.meta.templateId || "modern-01"; renderPreview(); setStep(5); updatePaLabel(); autoSave(); }
     function updatePaLabel()    { const el = document.getElementById('pa-tmpl-lbl'); if (!el) return; const t = TEMPLATE_CONFIGS.find(t => t.id === currentTemplateId); el.textContent = t ? `${t.name} · ${t.desc}` : currentTemplateId; }
+    let editorPanelOpen = true;
+    function toggleEditorPanel() {
+    editorPanelOpen = !editorPanelOpen;
+    const ep = document.getElementById('editor-panel');
+    const btn = document.getElementById('ep-toggle-btn');
+    ep.style.display = editorPanelOpen ? '' : 'none';
+    if (btn) btn.textContent = editorPanelOpen ? '◀ Editor' : '▶ Editor';
+    requestAnimationFrame(scalePreviewToFit);
+}
     function togglePreviewFull(){ document.getElementById('preview-area').classList.toggle('preview-full'); requestAnimationFrame(scalePreviewToFit); }
 
     function toggleAtsPanel() { atsPanelOpen = !atsPanelOpen; const p = document.getElementById('ats-panel'); p.classList.toggle('open', atsPanelOpen); if (atsPanelOpen) renderAtsPanel(); }
@@ -1857,20 +1866,97 @@ async function callmellow(prompt, outputEl, onSuccess) {
         );
     }
 
+// Button calls this — goes through paywall gate
 function exportPDF() {
-  attemptDownload('cv', currentTemplateId);
+    attemptDownload('cv', currentTemplateId);
 }
 
-window.addEventListener('beforeprint', () => {
-    const page = document.getElementById('cv-root');
-    if (page) {
-        page.style.transform = '';
-        page.style.marginBottom = '';
+// Gate calls this after clearing — does the actual PDF generation
+async function exportPDFDirect() {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) { showToast('PDF library not loaded', 'error'); return; }
+
+    const toast = showToast('<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle"></span> Generating PDF…', 'loading');
+
+    const A4_W = 794, A4_H = 1123;
+    const clone = document.createElement('div');
+    clone.className = 'page';
+    clone.setAttribute('data-template', currentTemplateId);
+    clone.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: ${A4_W}px;
+        min-height: ${A4_H}px;
+        transform: none;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: visible;
+    `;
+
+    const ov = cvData.meta.themeOverrides || {};
+    clone.style.setProperty('--color-accent', ov.primaryColor || getTemplateDefaultColor(currentTemplateId));
+    if (ov.paperColor) clone.style.setProperty('--color-paper', ov.paperColor);
+    clone.style.setProperty('--scale', ov.fontSizeScale || 1);
+    clone.style.setProperty('--spacing', ov.spacingScale || 1);
+    clone.innerHTML = renderTemplateContent(cvData, currentTemplateId);
+
+    document.body.appendChild(clone);
+    await new Promise(r => setTimeout(r, 400));
+
+    try {
+        const canvas = await html2canvas(clone, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            width: A4_W,
+            height: Math.max(clone.scrollHeight, A4_H),
+            windowWidth: A4_W,
+            logging: false
+        });
+
+        document.body.removeChild(clone);
+
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const mmPerPx = pageW / imgW;
+        const totalMM = imgH * mmPerPx;
+
+        if (totalMM <= pageH + 2) {
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
+        } else {
+            let yOffset = 0;
+            while (yOffset < imgH) {
+                const sliceH = Math.min(imgH - yOffset, Math.round(pageH / mmPerPx));
+                const sliceCanvas = document.createElement('canvas');
+                sliceCanvas.width = imgW;
+                sliceCanvas.height = sliceH;
+                sliceCanvas.getContext('2d').drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+                const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+                if (yOffset > 0) pdf.addPage();
+                pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
+                yOffset += sliceH;
+            }
+        }
+
+        const name = (cvData.personalDetails.fullName || 'Resume').replace(/\s+/g, '_');
+        pdf.save(`${name}_CV.pdf`);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+        showToast('PDF downloaded!', 'success');
+
+    } catch (err) {
+        if (document.body.contains(clone)) document.body.removeChild(clone);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+        showToast('PDF failed: ' + err.message, 'error');
     }
-});
-window.addEventListener('afterprint', () => {
-    scalePreviewToFit();
-});
+}
 
 function shareResume() { }
 function loadSharedResume() { }
