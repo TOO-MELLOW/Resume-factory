@@ -146,6 +146,7 @@
   window.attemptDownload = attemptDownload;
   window.requestOtp = requestOtp;
   window.confirmOtp = confirmOtp;
+  window.showPaywall = showPaywall;
   window.hidePaywall = hidePaywall;
   window.checkSessionStatus = checkSessionStatus;
 })();
