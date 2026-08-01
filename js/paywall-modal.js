@@ -190,3 +190,4 @@
   window.pwHandleContinueToPayment = pwHandleContinueToPayment;
   window.pwSelectPackage = pwSelectPackage;
 })();
+}
