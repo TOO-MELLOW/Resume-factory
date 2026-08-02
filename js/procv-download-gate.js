@@ -24,10 +24,7 @@
     try {
       const { data } = await supabase.auth.getSession();
       session = data.session;
-      alert('3. getSession OK, session=' + (session ? 'yes' : 'no'));
-    } catch (e) {
-      alert('3-ERROR getSession threw: ' + e.message);
-      return;
+      alert('3. getSession OK, session=' + (session ? 'yes' : 'no') + ' | id=' + (session ? session.user.id : 'none') + ' | email=' + (session ? session.user.email : 'none'));
     }
 
     if (session) {
