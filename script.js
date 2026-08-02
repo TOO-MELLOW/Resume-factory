@@ -1922,22 +1922,43 @@ async function exportPDFDirect() {
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = pdf.internal.pageSize.getWidth();
         const pageH = pdf.internal.pageSize.getHeight();
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         const imgW = canvas.width;
         const imgH = canvas.height;
         const mmPerPx = pageW / imgW;
         const totalMM = imgH * mmPerPx;
+        const pxPerPage = Math.round(pageH / mmPerPx);
 
         if (totalMM <= pageH + 2) {
-            pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
+            // Single page: draw at natural height, don't stretch to fill the sheet
+            // (stretching would distort fonts/spacing to fake a full page).
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
         } else {
+            // Multi-page: pad the captured canvas up to an exact multiple of a
+            // full page height, extending the last row of pixels downward, so
+            // the final page's background/sidebar continues to the bottom
+            // instead of cutting off into blank white space.
+            const paddedPages = Math.ceil(imgH / pxPerPage);
+            const paddedH = paddedPages * pxPerPage;
+            let sourceCanvas = canvas;
+            if (paddedH > imgH) {
+                const padded = document.createElement('canvas');
+                padded.width = imgW;
+                padded.height = paddedH;
+                const pctx = padded.getContext('2d');
+                pctx.drawImage(canvas, 0, 0);
+                // Stretch the last row of real pixels down to fill the gap.
+                pctx.drawImage(canvas, 0, imgH - 1, imgW, 1, 0, imgH, imgW, paddedH - imgH);
+                sourceCanvas = padded;
+            }
+
             let yOffset = 0;
-            while (yOffset < imgH) {
-                const sliceH = Math.min(imgH - yOffset, Math.round(pageH / mmPerPx));
+            while (yOffset < paddedH) {
+                const sliceH = Math.min(paddedH - yOffset, pxPerPage);
                 const sliceCanvas = document.createElement('canvas');
                 sliceCanvas.width = imgW;
                 sliceCanvas.height = sliceH;
-                sliceCanvas.getContext('2d').drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+                sliceCanvas.getContext('2d').drawImage(sourceCanvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
                 const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
                 if (yOffset > 0) pdf.addPage();
                 pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
