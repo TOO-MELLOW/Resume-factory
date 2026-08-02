@@ -1947,18 +1947,98 @@ async function exportPDFDirect() {
     document.body.appendChild(clone);
     
     try {
-        if (document.fonts && document.fonts.ready) {
-            await Promise.race([
-                document.fonts.ready,
-                new Promise(r => setTimeout(r, 2000)) 
-            ]);
-           } catch (e) { 
+    if (document.fonts && document.fonts.ready) {
+        await Promise.race([
+            document.fonts.ready,
+            new Promise(r => setTimeout(r, 2000))
+        ]);
+    }
+} catch (e) {
     await new Promise(r => setTimeout(r, 150));
+}
 
-    
-    const paperColor = ov.paperColor
-        || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
-        || '#FAF6EF';
+const paperColor = ov.paperColor
+    || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
+    || '#FAF6EF';
+
+try {
+    const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: paperColor,
+        width: A4_W,
+        height: Math.max(clone.scrollHeight, A4_H),
+        windowWidth: A4_W,
+        logging: false
+    });
+
+    document.body.removeChild(clone);
+
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+    const mmPerPx = pageW / imgW;
+    const totalMM = imgH * mmPerPx;
+    const pxPerPage = Math.round(pageH / mmPerPx);
+
+    if (totalMM <= pageH + 2) {
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
+    } else {
+        let paddedPages = Math.ceil(imgH / pxPerPage);
+        const spill = imgH % pxPerPage;
+        const MIN_MEANINGFUL_SPILL = pxPerPage * 0.08;
+
+        if (spill > 0 && spill < MIN_MEANINGFUL_SPILL && paddedPages > 1) {
+            paddedPages -= 1;
+        }
+        const paddedH = paddedPages * pxPerPage;
+
+        let sourceCanvas = canvas;
+        if (paddedH > imgH) {
+            const padded = document.createElement('canvas');
+            padded.width = imgW;
+            padded.height = paddedH;
+            const pctx = padded.getContext('2d');
+            pctx.fillStyle = paperColor;
+            pctx.fillRect(0, 0, imgW, paddedH);
+            pctx.drawImage(canvas, 0, 0);
+            pctx.drawImage(canvas, 0, imgH - 1, imgW, 1, 0, imgH, imgW, paddedH - imgH);
+            sourceCanvas = padded;
+        }
+
+        let yOffset = 0;
+        while (yOffset < paddedH) {
+            const sliceH = Math.min(paddedH - yOffset, pxPerPage);
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = imgW;
+            sliceCanvas.height = sliceH;
+            const sctx = sliceCanvas.getContext('2d');
+            sctx.fillStyle = paperColor;
+            sctx.fillRect(0, 0, imgW, sliceH);
+            sctx.drawImage(sourceCanvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+            const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+            if (yOffset > 0) pdf.addPage();
+            pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
+            yOffset += sliceH;
+        }
+    }
+
+    const name = (cvData.personalDetails.fullName || 'Resume').replace(/\s+/g, '_');
+    pdf.save(`${name}_CV.pdf`);
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+    showToast('PDF downloaded!', 'success');
+
+} catch (err) {
+    if (document.body.contains(clone)) document.body.removeChild(clone);
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+    showToast('PDF failed: ' + err.message, 'error');
+}
 
     try {
         const canvas = await html2canvas(clone, {
