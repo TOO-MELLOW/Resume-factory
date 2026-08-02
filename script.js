@@ -1813,18 +1813,8 @@ function stepPersonal(p) {
     }
 
     // ---------- AI ----------
-// NOTE: This used to call http://localhost:11434 (a local Ollama server).
-// That only ever worked on the original developer's machine — for every
-// real visitor on the deployed site it's a request to their own laptop,
-// which fails every time. Rather than ship that silent failure (or fake a
-// working response), this shows an honest "not connected yet" message.
-//
-// To make this feature real, point it at a proper backend endpoint that
-// calls an LLM API server-side (e.g. a Vercel serverless function that
-// holds the API key). Never put a real AI-provider API key directly in
-// this client-side file — anyone can read it in the browser dev tools.
-const AI_BACKEND_CONFIGURED = false; // flip to true once a real endpoint exists below
-const AI_BACKEND_URL = ""; // e.g. "/api/ai-generate"
+const AI_BACKEND_CONFIGURED = true;
+const AI_BACKEND_URL = "/api/ai-generate";
 
 async function callmellow(prompt, outputEl, onSuccess) {
     outputEl.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:#1B2A4A;color:#fff;padding:8px 12px;border-radius:6px"><span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> Thinking...</div>`;
@@ -1920,12 +1910,11 @@ async function callmellow(prompt, outputEl, onSuccess) {
         );
     }
 
-// Button calls this — goes through paywall gate
+
 function exportPDF() {
     attemptDownload('cv', currentTemplateId);
 }
 
-// Gate calls this after clearing — does the actual PDF generation
 async function exportPDFDirect() {
     const { jsPDF } = window.jspdf;
     if (!jsPDF) { showToast('PDF library not loaded', 'error'); return; }
@@ -1956,26 +1945,17 @@ async function exportPDFDirect() {
     clone.innerHTML = renderTemplateContent(cvData, currentTemplateId);
 
     document.body.appendChild(clone);
-    // Wait for web fonts to actually finish loading (Fraunces/Inter come from
-    // Google Fonts) before measuring height — a flat short timeout isn't
-    // reliable on slow connections, and measuring/capturing before fonts swap
-    // in causes a mismatch between the measured height and the real rendered
-    // height, which showed up as extra blank space at the bottom of the PDF.
+    
     try {
         if (document.fonts && document.fonts.ready) {
             await Promise.race([
                 document.fonts.ready,
-                new Promise(r => setTimeout(r, 2000)) // safety cap, don't hang forever
+                new Promise(r => setTimeout(r, 2000)) 
             ]);
-        }
-    } catch (e) { /* ignore, fall through to capture anyway */ }
+           } catch (e) { 
     await new Promise(r => setTimeout(r, 150));
 
-    // Resolve the real paper color to paint the canvas with. Using a
-    // transparent background (backgroundColor: null) here is what caused
-    // solid BLACK blocks/pages: canvas.toDataURL('image/jpeg', ...) has no
-    // alpha channel, so any unpainted/transparent pixel is flattened to
-    // black rather than left blank.
+    
     const paperColor = ov.paperColor
         || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
         || '#FAF6EF';
