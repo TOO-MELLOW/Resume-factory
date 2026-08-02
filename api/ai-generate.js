@@ -14,12 +14,16 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { prompt } = req.body || {};
+  // json:true is sent by callmellowJSON() for the "AI Improve" bullet/summary
+  // rewrites, which ask the model to return structured JSON covering every
+  // bullet in a section. That needs a much bigger token budget than a single
+  // plain-text tip, or the response gets cut off mid-JSON and fails to parse.
+  const { prompt, json } = req.body || {};
 
   if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
     return res.status(400).json({ error: "Missing prompt" });
   }
-  if (prompt.length > 4000) {
+  if (prompt.length > 6000) {
     return res.status(400).json({ error: "Prompt too long" });
   }
 
@@ -47,21 +51,43 @@ module.exports = async (req, res) => {
           { role: "user", content: prompt }
         ],
         temperature: 0.6,
-        max_tokens: 600
+        // JSON-mode requests (AI Improve) need room for a rewrite of every
+        // bullet in the section, plain-text tips don't. 600 was only enough
+        // for a single-item response and silently broke multi-bullet JSON.
+        max_tokens: json ? 2000 : 600
       })
     });
 
     if (!groqRes.ok) {
       const errBody = await groqRes.text();
       console.error("Groq API error:", groqRes.status, errBody);
-      return res.status(502).json({ error: "AI provider returned an error" });
+      // Surface the real upstream status/message instead of a generic 502
+      // so failures (bad key, rate limit, etc.) are visible from the UI.
+      let upstreamMessage = errBody;
+      try { upstreamMessage = JSON.parse(errBody)?.error?.message || errBody; } catch (_) {}
+      return res.status(502).json({
+        error: "AI provider returned an error",
+        upstreamStatus: groqRes.status,
+        upstreamMessage
+      });
     }
 
     const data = await groqRes.json();
-    const text = data?.choices?.[0]?.message?.content?.trim();
+    const choice = data?.choices?.[0];
+    const text = choice?.message?.content?.trim();
 
     if (!text) {
       return res.status(502).json({ error: "Empty response from AI provider" });
+    }
+
+    // finish_reason "length" means the response was cut off by max_tokens —
+    // for JSON mode this almost always produces unparseable output, so fail
+    // loudly here instead of letting the frontend hit a confusing JSON.parse error.
+    if (choice.finish_reason === "length" && json) {
+      console.error("Groq response truncated by max_tokens for a JSON-mode request");
+      return res.status(502).json({
+        error: "AI response was too long and got cut off. Try improving fewer bullets at once."
+      });
     }
 
     return res.status(200).json({ response: text });
