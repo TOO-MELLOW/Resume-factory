@@ -5,9 +5,7 @@
   const SUPABASE_URL = "https://mlhuidtekecxgeizgmyr.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_vNUa__bfq0gHRIObYNe0rQ_MgI8s09r";
 
-  // Only create the client if nobody has already created one on this page.
-  // Prevents "Multiple GoTrueClient instances" auth bugs if another file
-  // (e.g. procv-analytics.js) also needs Supabase access.
+  
   const supabase = window.mellowSupabase || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window.mellowSupabase = supabase; 
   window.MELLOW_SUPABASE_URL = SUPABASE_URL;
