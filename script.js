@@ -465,16 +465,16 @@ function renderTemplate(templateId, data) {
     html = html.replace(/\{\{contactList\}\}/g, contactListHtml(p));
     html = html.replace(/\{\{atsContactLine\}\}/g, atsContactLine(p));
 
-
     const visibleSections = data.sections.filter(s => s.visible).sort((a,b) => a.order - b.order);
     let sectionsHtml = '';
     for (const sec of visibleSections) {
-        
+        sectionsHtml += SR[sec.type] ? SR[sec.type](sec) : '';
     }
     html = html.replace(/\{\{sections\}\}/g, sectionsHtml);
 
     return html;
 }
+
    function renderTemplateContent(data, tid) {
     if (tid==='executive-02')      return renderExecutive02(data);
     if (tid.startsWith('modern'))  return renderModern(data, tid);
@@ -499,10 +499,8 @@ const SIDEBAR_TEMPLATE_IDS = new Set([
         'duo-01','duo-02','duo-03'
     ]);
 
-function wrapMain(title,inner){ return `<div class="main-section"><p class="main-label">${escHtml(title)}</p>${inner||`<p class="empty-note">No entries yet.</p>`}</div>`; }
-    function wrapSide(title,inner){ return `<div class="side-section"><p class="side-label">${escHtml(title)}</p>${inner||`<p class="empty-note">None added.</p>`}</div>`; }
     function wrapMain(title,inner){ return `<div class="main-section"><p class="main-label">${escHtml(title)}</p>${inner||`<p class="empty-note">No entries yet.</p>`}</div>`; }
-    function bareContent(inner){ return inner || `<p class="empty-note">No entries yet.</p>`; }
+    function wrapSide(title,inner){ return `<div class="side-section"><p class="side-label">${escHtml(title)}</p>${inner||`<p class="empty-note">None added.</p>`}</div>`; }
 
     const SR = {
         experience(s){ const h=s.items.map(it=>`<div class="entry"><div class="entry-header"><div><p class="entry-title">${escHtml(it.role)}</p><p class="entry-sub">${escHtml(it.company)}${it.location?` · ${escHtml(it.location)}`:""}</p></div><span class="entry-date">${fmtDate(it.startDate,it.endDate,it.current)}</span></div>${it.bullets&&it.bullets.length?`<ul>${it.bullets.map(b=>`<li>${escHtml(b)}</li>`).join("")}</ul>`:""}</div>`).join(""); return wrapMain(s.title,h); },
@@ -1234,8 +1232,6 @@ function getTemplateDefaultColor(tid) {
     return map[tid] || "#2F6F63";
 }
 
-function contactListHtml(p){ const items=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url,label:l.label}))]; return items.filter(i=>i.val).map(i=>`<li><span class="icon-inline">${icoSVG(i.icon)}</span>${i.label?`<a href="${escHtml(i.val)}">${escHtml(i.label)}</a>`:escHtml(i.val)}</li>`).join(""); }
-function atsContactLine(p){ const items=[{icon:"email",val:p.email},{icon:"phone",val:p.phone},{icon:"location",val:p.location},...(p.links||[]).map(l=>({icon:"link",val:l.url}))]; return items.filter(i=>i.val).map(i=>`<span class="contact-inline-item"><span class="icon-inline">${icoSVG(i.icon)}</span>${escHtml(i.val)}</span>`).join('<span class="contact-inline-item" style="opacity:.4">|</span>'); }
 
 function setStep(n) {
     currentStep = n;
@@ -1292,10 +1288,11 @@ ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your expe
         <p class="ep-sh">Links (optional)</p>
         ${(p.links || []).map((l, i) => `
         <div class="f-row">
-           
+            <div class="f"><label>Label</label><input value="${escHtml(l.label || '')}" oninput="updateLink(${i},'label',this.value)" placeholder="e.g. LinkedIn"></div>
             <div class="f"><label>URL</label><input value="${escHtml(l.url)}" oninput="updateLink(${i},'url',this.value)" placeholder="https://"></div>
             <button class="btn-del" style="align-self:flex-end;margin-bottom:8px" onclick="removeLink(${i})">✕</button>
-        </div>
+        </div>`).join("")}
+        <button class="btn-add" onclick="addLink()">+ Add link</button>`;
     }
 
     function stepSection(type) {
@@ -2148,24 +2145,7 @@ try {
     setTimeout(() => toast.remove(), 300);
     showToast('PDF downloaded!', 'success');
 
-} catch (err) {
-    if (document.body.contains(clone)) document.body.removeChild(clone);
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 300);
-    showToast('PDF failed: ' + err.message, 'error');
-}
 
-    try {
-        const canvas = await html2canvas(clone, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: paperColor,
-            width: A4_W,
-            height: Math.max(clone.scrollHeight, A4_H),
-            windowWidth: A4_W,
-            logging: false
-        });
 
         document.body.removeChild(clone);
 
