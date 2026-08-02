@@ -60,6 +60,14 @@
 </head>
 <body data-view="landing">
   <div id="toast-container"></div>
+    <div class="quick-fab-wrap" id="quick-fab-wrap">
+  <div class="quick-fab-menu" id="quick-fab-menu">
+    <button class="qf-item" onclick="closeQuickFab();navigate('builder')">📄 Create CV</button>
+    <button class="qf-item qf-soon" disabled title="Coming soon">📥 Import CV<span class="qf-badge">Soon</span></button>
+    <button class="qf-item qf-soon" disabled title="Coming soon">✉️ Cover Letter<span class="qf-badge">Soon</span></button>
+  </div>
+  <button class="quick-fab" id="quick-fab" onclick="toggleQuickFab()" aria-label="Quick actions">+</button>
+    </div>
 
   <!-- LANDING VIEW -->
   <div id="view-landing">
@@ -222,13 +230,13 @@
     <div class="bb">
       <div class="ep" id="editor-panel">
         <div class="ep-tabs">
-          <button class="ep-tab active" data-step="0" onclick="setStep(0)">👤</button>
-          <button class="ep-tab" data-step="1" onclick="setStep(1)">💼</button>
-          <button class="ep-tab" data-step="2" onclick="setStep(2)">🎓</button>
-          <button class="ep-tab" data-step="3" onclick="setStep(3)">🔧</button>
-          <button class="ep-tab" data-step="4" onclick="setStep(4)">📎</button>
-          <button class="ep-tab" data-step="5" onclick="setStep(5)">🎨</button>
-          <button class="ep-tab" data-step="6" onclick="setStep(6)">💡</button>
+          <button class="ep-tab active" data-step="0" onclick="setStep(0)">👤<span class="ep-tab-lbl">Personal</span></button>
+          <button class="ep-tab" data-step="1" onclick="setStep(1)">💼<span class="ep-tab-lbl">Experience</span></button>
+          <button class="ep-tab" data-step="2" onclick="setStep(2)">🎓<span class="ep-tab-lbl">Education</span></button>
+          <button class="ep-tab" data-step="3" onclick="setStep(3)">🔧<span class="ep-tab-lbl">Skills</span></button>
+          <button class="ep-tab" data-step="4" onclick="setStep(4)">📎<span class="ep-tab-lbl">Extras</span></button>
+          <button class="ep-tab" data-step="5" onclick="setStep(5)">🎨<span class="ep-tab-lbl">Design</span></button>
+          <button class="ep-tab" data-step="6" onclick="setStep(6)">💡<span class="ep-tab-lbl">AI Tools</span></button>
         </div>
         <div class="ep-body" id="ep-body"></div>
       </div>
@@ -247,6 +255,16 @@
         </div>
       </div>
       <div class="ats-p" id="ats-panel"></div>
+      <div class="editor-statusbar" id="editor-statusbar">
+  <button class="sb-item" id="sb-ats" onclick="runATSCheck()" title="Open full ATS check">
+    <span class="sb-dot" id="sb-ats-dot"></span><span id="sb-ats-txt">ATS —/9</span>
+  </button>
+  <div class="sb-item" id="sb-length"><span id="sb-length-txt">0 words</span></div>
+  <div class="sb-item" id="sb-ready">
+    <span class="sb-dot" id="sb-ready-dot"></span><span id="sb-ready-txt">Checking…</span>
+  </div>
+      
+
     </div>
     <button class="preview-fab" id="preview-fab" onclick="toggleMobilePreview()" aria-label="Toggle CV preview">👁</button>
     <div class="preview-slide-overlay" id="preview-slide-overlay">
