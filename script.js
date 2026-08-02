@@ -2001,10 +2001,13 @@ function applySingleBullet(type, i, j, btnEl) {
         const resp = await fetch(AI_BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt })
+            body: JSON.stringify({ prompt, json: true })
         });
-        if (!resp.ok) throw new Error(`Request failed (${resp.status})`);
-        const data = await resp.json();
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+            const detail = data.upstreamMessage || data.error || `status ${resp.status}`;
+            throw new Error(detail);
+        }
         let text = (data.response || "").trim();
         text = text.replace(/^```json\s*/i, "").replace(/^```\s*/,"").replace(/```\s*$/,"");
         const parsed = JSON.parse(text);
