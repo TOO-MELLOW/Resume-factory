@@ -2004,28 +2004,20 @@ async function exportPDFDirect() {
         const pxPerPage = Math.round(pageH / mmPerPx);
 
         if (totalMM <= pageH + 2) {
-            // Single page: draw at natural height, don't stretch to fill the sheet
-            // (stretching would distort fonts/spacing to fake a full page).
+            
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
         } else {
-            // Multi-page: pad the captured canvas up to an exact multiple of a
-            // full page height, extending the last row of pixels downward, so
-            // the final page's background/sidebar continues to the bottom
-            // instead of cutting off into blank white space.
+            
             let paddedPages = Math.ceil(imgH / pxPerPage);
-// Only keep a trailing page if it has a meaningful amount of real content.
-// A tiny sliver spilling over (margins, shadows, rounding) should NOT force
-// a whole extra blank page — require at least 8% of a page's height before
-// we treat the overflow as "real" content worth its own page.
-const spill = imgH % pxPerPage;
-const MIN_MEANINGFUL_SPILL = pxPerPage * 0.08;
-if (spill > 0 && spill < MIN_MEANINGFUL_SPILL && paddedPages > 1) {
-    paddedPages -= 1;
-}
-const paddedH = paddedPages * pxPerPage;
-            if (spill > 0 && spill <= 4 && paddedPages > 1) paddedPages -= 1;
+            const spill = imgH % pxPerPage;
+            const MIN_MEANINGFUL_SPILL = pxPerPage * 0.08;
+
+            if (spill > 0 && spill < MIN_MEANINGFUL_SPILL && paddedPages > 1) {
+            paddedPages -= 1;
+            }
             const paddedH = paddedPages * pxPerPage;
+            
             let sourceCanvas = canvas;
             if (paddedH > imgH) {
                 const padded = document.createElement('canvas');
