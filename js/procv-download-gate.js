@@ -14,7 +14,6 @@
   window.MELLOW_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
   async function attemptDownload(documentType, templateId) {
-    alert('2. attemptDownload started');
     if (typeof window.pwTrack === "function") {
       try { window.pwTrack("cv_download_attempted", { document_type: documentType, template_id: templateId }); }
       catch (e) { console.error("pwTrack failed", e); }
@@ -24,33 +23,33 @@
     try {
       const { data } = await supabase.auth.getSession();
       session = data.session;
-      alert('3. getSession OK, session=' + (session ? 'yes' : 'no') + ' | id=' + (session ? session.user.id : 'none') + ' | email=' + (session ? session.user.email : 'none'));
     } catch (e) {
-      alert('3-ERROR getSession threw: ' + e.message);
+      console.error("getSession failed", e);
+      showToastSafe("Something went wrong checking your account. Please try again.", "error");
       return;
     }
 
     if (session) {
       const paidResult = await tryPaidDownload(documentType, templateId, session.access_token);
-      alert('3b. paidResult: ' + JSON.stringify(paidResult));
       if (paidResult.allowed) {
         return renderAndDownload(documentType, templateId, { paid: true });
       }
     }
 
-    alert('4. calling tryFreeDownload now');
     const freeResult = await tryFreeDownload(documentType, templateId);
-    alert('5. tryFreeDownload returned: ' + JSON.stringify(freeResult));
-
     if (freeResult.allowed) {
       return renderAndDownload(documentType, templateId, { paid: false });
     }
-    alert('6. showing paywall');
     if (window.pwOpenForDownload) {
       window.pwOpenForDownload(documentType, templateId);
     } else {
       showPaywall();
     }
+  }
+
+  function showToastSafe(msg, type) {
+    if (typeof window.showToast === "function") window.showToast(msg, type);
+    else console.error(msg);
   }
 
   async function tryPaidDownload(documentType, templateId, accessToken) {
