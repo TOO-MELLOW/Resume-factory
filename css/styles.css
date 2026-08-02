@@ -1,4 +1,4 @@
-        .btn {
+.btn {
             display: inline-flex; align-items: center; justify-content: center;
             gap: 6px; font-family: inherit; font-weight: 600; font-size: 14px;
             padding: 10px 20px; border-radius: var(--r8); border: none;
@@ -566,6 +566,8 @@
 .ai-option-keep { align-self: flex-start; font-size: 10.5px; color: #6B7280; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 2px 0; }
 .ai-loading { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #3730A3; }
 .ai-error { font-size: 11.5px; color: #B91C1C; }
+.import-dropzone { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px 12px; border: 2px dashed var(--border-2); border-radius: var(--r12); background: var(--surface-2); color: var(--t2); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s }
+.import-dropzone:hover { border-color: var(--accent); background: var(--accent-bg); color: var(--accent-dk) }
 
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 320px }
         .toast { background: #1B2A4A; color: #fff; padding: 12px 16px; border-radius: var(--r8); box-shadow: var(--sh-lg); font-size: 13px; display: flex; align-items: center; gap: 8px; transform: translateX(120%); transition: transform .3s ease }
@@ -583,10 +585,35 @@
         .tips-close:hover { color: var(--t1) }
         .tips-modal-content h3 { margin: 0 0 12px; font-family: var(--font-display) }
         .tips-modal-content p { font-size: 14px; line-height: 1.6; color: var(--t2) }
+        .tip-cat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 16px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border) }
+        .tip-cat:first-child { margin-top: 0 }
+        .tip-list { margin: 0; padding: 0; list-style: none }
+        .tip-list li { font-size: 13px; line-height: 1.6; color: var(--t2); padding: 4px 0 4px 18px; position: relative }
+        .tip-list li::before { content: "•"; position: absolute; left: 4px; color: var(--accent) }
 
-        .preview-fab { position: fixed; bottom: 20px; right: 20px; z-index: 60; background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; font-size: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); cursor: pointer; display: none; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; touch-action: manipulation }
+        .preview-fab { position: fixed; bottom: 52px; right: 20px; z-index: 60; background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; font-size: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); cursor: pointer; display: none; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; touch-action: manipulation }
+        .editor-statusbar { display: flex; align-items: stretch; flex-shrink: 0; background: #fff; border-top: 1px solid var(--border); height: 32px; padding: 0 6px; gap: 4px; overflow-x: auto; scrollbar-width: none }
+        .editor-statusbar::-webkit-scrollbar { display: none }
+        .sb-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--t2); background: none; border: none; font-family: inherit; padding: 0 8px; white-space: nowrap; cursor: default }
+        button.sb-item { cursor: pointer }
+        button.sb-item:hover { color: var(--accent) }
+        .sb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--t4); flex-shrink: 0 }
+        .sb-dot.good { background: #22C55E }
+        .sb-dot.warn { background: #F59E0B }
+        .sb-dot.bad  { background: #DC2626 }
         .preview-fab:active { transform: scale(0.92) }
         .preview-fab.active { background: var(--brand) }
+        .quick-fab-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 55; display: flex; flex-direction: column; align-items: flex-end; gap: 10px }
+        [data-view=builder] .quick-fab-wrap { display: none }
+        .quick-fab { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; font-size: 28px; line-height: 1; box-shadow: var(--sh-lg); cursor: pointer; transition: transform .2s, background .2s; touch-action: manipulation }
+        .quick-fab:active { transform: scale(0.92) }
+        .quick-fab-wrap.open .quick-fab { background: var(--brand); transform: rotate(45deg) }
+        .quick-fab-menu { display: none; flex-direction: column; gap: 4px; background: #fff; border: 1px solid var(--border); border-radius: var(--r12); box-shadow: var(--sh-lg); padding: 8px; min-width: 190px }
+        .quick-fab-wrap.open .quick-fab-menu { display: flex }
+        .qf-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: none; border: none; text-align: left; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--t1); padding: 9px 10px; border-radius: var(--r8); cursor: pointer; white-space: nowrap }
+        .qf-item:hover:not(:disabled) { background: var(--surface-2) }
+        .qf-item:disabled { color: var(--t4); cursor: not-allowed }
+        .qf-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; background: var(--surface-2); color: var(--t3); border: 1px solid var(--border); padding: 1px 6px; border-radius: 10px }
         .preview-slide-overlay { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: var(--bg); z-index: 70; transition: right 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; box-shadow: -4px 0 24px rgba(0,0,0,0.12) }
         .preview-slide-overlay.open { right: 0 }
         .preview-slide-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 52px }
@@ -824,4 +851,3 @@
 .pa-tb .preview-close {
     display: inline-flex !important;
 }
-
