@@ -552,6 +552,21 @@
         .ats-jd textarea { width: 100%; min-height: 56px; font-family: inherit; font-size: 12px; padding: 7px; border: 1px solid var(--border); border-radius: var(--r4); resize: vertical; margin-bottom: 2px; -webkit-appearance: none; appearance: none }
         .ats-note { font-size: 10px; color: var(--t4); margin: 0 0 10px }
 
+.ai-inline-panel { display: none; margin-top: 8px; border: 1px solid #C7D2FE; background: #F5F7FF; border-radius: 8px; padding: 10px; }
+.ai-inline-panel.open { display: block; }
+.ai-panel-hd { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: #3730A3; margin-bottom: 8px; }
+.ai-panel-close { background: none; border: none; cursor: pointer; font-size: 12px; color: #6B7280; }
+.ai-bullet-group { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #D1D5DB; }
+.ai-bullet-group:last-child { border-bottom: none; }
+.ai-orig { font-size: 10.5px; color: #6B7280; font-style: italic; margin: 0 0 6px; }
+.ai-options { display: flex; flex-direction: column; gap: 6px; }
+.ai-option-card { text-align: left; font-size: 11.5px; line-height: 1.5; padding: 8px 10px; border: 1px solid #DDD; background: #fff; border-radius: 6px; cursor: pointer; transition: border-color .15s, background .15s; }
+.ai-option-card:hover { border-color: var(--accent); background: #FAFAFF; }
+.ai-option-card.applied { border-color: #16A34A; background: #F0FDF4; }
+.ai-option-keep { align-self: flex-start; font-size: 10.5px; color: #6B7280; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 2px 0; }
+.ai-loading { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #3730A3; }
+.ai-error { font-size: 11.5px; color: #B91C1C; }
+
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 320px }
         .toast { background: #1B2A4A; color: #fff; padding: 12px 16px; border-radius: var(--r8); box-shadow: var(--sh-lg); font-size: 13px; display: flex; align-items: center; gap: 8px; transform: translateX(120%); transition: transform .3s ease }
         .toast.show { transform: translateX(0) }
