@@ -1286,6 +1286,10 @@ function stepPersonal(p) {
             </div>
             <textarea rows="4" oninput="updatePD('summary',this.value);updateWordCount(this)">${escHtml(p.summary)}</textarea>
             ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your experience level, key skills, and what you bring.</div>` : ""}
+            <textarea rows="4" oninput="updatePD('summary',this.value);updateWordCount(this)">${escHtml(p.summary)}</textarea>
+${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your experience level, key skills, and what you bring.</div>` : ""}
+<button class="btn-ai" onclick="aiImproveSummaryInline(this)">✨ AI Improve Summary</button>
+<div class="ai-inline-panel" id="ai-summary-panel"></div>
         </div>
         <p class="ep-sh">Links (optional)</p>
         ${(p.links || []).map((l, i) => `
@@ -1370,7 +1374,11 @@ function stepPersonal(p) {
             </div>
             ${hasWeak ? `<div class="weak-hint">💡 Some bullets are short. Add specific achievements and numbers for more impact.</div>` : ""}
             <div class="bullet-list" id="bullets-experience-${i}">${bullets.map((b, j) => bulletRow(b, j, "experience", i)).join("")}</div>
-            <button class="btn-add" style="margin-top:0" onclick="addBullet('experience',${i})">+ Add bullet</button>
+            <button class="btn-ai" onclick="aiImproveInline('experience',${i},this)" ${bullets.length ? "" : "disabled"}>✨ AI Improve</button>
+           <div class="bullet-list" id="bullets-experience-${i}">${bullets.map((b, j) => bulletRow(b, j, "experience", i)).join("")}</div>
+<button class="btn-add" style="margin-top:0" onclick="addBullet('experience',${i})">+ Add bullet</button>
+<div class="ai-inline-panel" id="ai-panel-experience-${i}"></div>
+</div>`; 
         </div>`;
     }
 
@@ -1396,37 +1404,45 @@ function stepPersonal(p) {
     }
 
     function projCard(it, i) {
-        return `
-        <div class="icard" draggable="true" data-type="projects" data-idx="${i}">
-            <div class="icard-top">
-                <span class="icard-lbl">${escHtml(it.name || "New Project")}</span>
-                <button class="btn-del" onclick="delItem('projects',${i})">Delete</button>
-            </div>
-            <div class="f"><label>Project Name</label><input value="${escHtml(it.name)}" oninput="updateItem('projects',${i},'name',this.value)"></div>
-            <div class="f"><label>URL (optional)</label><input value="${escHtml(it.url)}" oninput="updateItem('projects',${i},'url',this.value)" placeholder="https://"></div>
-            <div class="f-row">
-                <div class="f"><label>Start Date</label>${datePicker(`projects-${i}`, "startDate", it.startDate)}</div>
-                <div class="f"><label>End Date</label>${datePicker(`projects-${i}`, "endDate", it.endDate)}</div>
-            </div>
-            <label style="font-size:11px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px">Bullet Points</label>
-            <div class="bullet-list" id="bullets-projects-${i}">${(it.bullets || []).map((b, j) => bulletRow(b, j, "projects", i)).join("")}</div>
-            <button class="btn-add" style="margin-top:0" onclick="addBullet('projects',${i})">+ Add bullet</button>
-        </div>`;
-    }
+    return `
+    <div class="icard" draggable="true" data-type="projects" data-idx="${i}">
+        <div class="icard-top">
+            <span class="icard-lbl">${escHtml(it.name || "New Project")}</span>
+            <button class="btn-del" onclick="delItem('projects',${i})">Delete</button>
+        </div>
+        <div class="f"><label>Project Name</label><input value="${escHtml(it.name)}" oninput="updateItem('projects',${i},'name',this.value)"></div>
+        <div class="f"><label>URL (optional)</label><input value="${escHtml(it.url)}" oninput="updateItem('projects',${i},'url',this.value)" placeholder="https://"></div>
+        <div class="f-row">
+            <div class="f"><label>Start Date</label>${datePicker(`projects-${i}`, "startDate", it.startDate)}</div>
+            <div class="f"><label>End Date</label>${datePicker(`projects-${i}`, "endDate", it.endDate)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
+            <label style="font-size:11px;font-weight:600;color:var(--t2)">Bullet Points</label>
+            <button class="btn-ai" onclick="aiImproveInline('projects',${i},this)" ${(it.bullets||[]).length ? "" : "disabled"}>✨ AI Improve</button>
+        </div>
+        <div class="bullet-list" id="bullets-projects-${i}">${(it.bullets || []).map((b, j) => bulletRow(b, j, "projects", i)).join("")}</div>
+        <button class="btn-add" style="margin-top:0" onclick="addBullet('projects',${i})">+ Add bullet</button>
+        <div class="ai-inline-panel" id="ai-panel-projects-${i}"></div>
+    </div>`;
+}
 
-    function customCard(it, i) {
-        return `
-        <div class="icard" draggable="true" data-type="custom" data-idx="${i}">
-            <div class="icard-top">
-                <span class="icard-lbl">${escHtml(it.title || "Activity")}</span>
-                <button class="btn-del" onclick="delItem('custom',${i})">Delete</button>
-            </div>
-            <div class="f"><label>Title</label><input value="${escHtml(it.title)}" oninput="updateItem('custom',${i},'title',this.value)"></div>
-            <label style="font-size:11px;font-weight:600;color:var(--t2);display:block;margin-bottom:4px">Bullet Points</label>
-            <div class="bullet-list" id="bullets-custom-${i}">${(it.bullets || []).map((b, j) => bulletRow(b, j, "custom", i)).join("")}</div>
-            <button class="btn-add" style="margin-top:0" onclick="addBullet('custom',${i})">+ Add bullet</button>
-        </div>`;
-    }
+function customCard(it, i) {
+    return `
+    <div class="icard" draggable="true" data-type="custom" data-idx="${i}">
+        <div class="icard-top">
+            <span class="icard-lbl">${escHtml(it.title || "Activity")}</span>
+            <button class="btn-del" onclick="delItem('custom',${i})">Delete</button>
+        </div>
+        <div class="f"><label>Title</label><input value="${escHtml(it.title)}" oninput="updateItem('custom',${i},'title',this.value)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
+            <label style="font-size:11px;font-weight:600;color:var(--t2)">Bullet Points</label>
+            <button class="btn-ai" onclick="aiImproveInline('custom',${i},this)" ${(it.bullets||[]).length ? "" : "disabled"}>✨ AI Improve</button>
+        </div>
+        <div class="bullet-list" id="bullets-custom-${i}">${(it.bullets || []).map((b, j) => bulletRow(b, j, "custom", i)).join("")}</div>
+        <button class="btn-add" style="margin-top:0" onclick="addBullet('custom',${i})">+ Add bullet</button>
+        <div class="ai-inline-panel" id="ai-panel-custom-${i}"></div>
+    </div>`;
+}
 
     function skillCard(it, i) {
         return `
@@ -1879,6 +1895,7 @@ function applySummary(btnEl) {
     function aiImproveInline(type, i, btnEl) {
     const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
     const it = sec.items[i];
+    const label = it.role || it.name || it.title || "this item";
     const bullets = (it.bullets || []).filter(b => b.trim());
     if (!bullets.length) { showToast("Add some bullet points first!", "info"); return; }
 
@@ -1889,7 +1906,7 @@ function applySummary(btnEl) {
     panel.innerHTML = `<div class="ai-loading"><span class="spinner"></span> Generating improved bullets…</div>`;
     if (btnEl) btnEl.disabled = true;
 
-    const prompt = `Improve these CV bullets for "${it.role || it.name || "this role"}". For EACH original bullet, give 3 alternative rewrites using strong action verbs and quantifying impact where possible. Return ONLY valid JSON, no markdown, no commentary, in this exact shape:
+    const prompt = `Improve these CV bullets for "${label}". For EACH original bullet, give 3 alternative rewrites using strong action verbs and quantifying impact where possible. Return ONLY valid JSON, no markdown, no commentary, in this exact shape:
 [
   { "original": "original bullet text", "options": ["rewrite 1", "rewrite 2", "rewrite 3"] }
 ]
