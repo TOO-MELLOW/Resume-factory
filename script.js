@@ -1840,35 +1840,115 @@ async function callmellow(prompt, outputEl, onSuccess) {
     }
 }
 
-    function aiImproveSummary() {
-        const out = document.getElementById('ai-output'); if (!out) return;
-        const p = cvData.personalDetails;
-        callmellow(
-            `Improve this CV summary for a ${p.jobTitle||"professional"}. Make it punchy and specific, around 60 words. Return ONLY the improved text, nothing else.\n\nCurrent: "${p.summary}"`,
-            out,
-            text => {
-                out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Suggested summary:</p><div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:10px;margin-bottom:8px;line-height:1.6">${escHtml(text.trim())}</div><button class="btn btn-primary btn-sm" data-text="${escHtml(text.trim())}" onclick="cvData.personalDetails.summary=this.dataset.text;renderPreview();setStep(0);autoSave();showToast('Summary applied!','success')">Apply this summary</button>`;
-            }
-        );
+    function aiImproveSummaryInline(btnEl) {
+    const panel = document.getElementById('ai-summary-panel');
+    const p = cvData.personalDetails;
+    panel.classList.add('open');
+    panel.innerHTML = `<div class="ai-loading"><span class="spinner"></span> Generating summary options…</div>`;
+    btnEl.disabled = true;
+
+    const prompt = `Give 3 alternative rewrites of this CV summary for a ${p.jobTitle||"professional"}. Punchy, specific, 50-70 words each. Return ONLY valid JSON: {"options": ["version 1", "version 2", "version 3"]}\n\nCurrent: "${p.summary}"`;
+
+    callmellowJSON(prompt, panel, (data) => {
+        panel.innerHTML = `
+        <div class="ai-panel-hd">
+            <span>✨ Suggested summaries — click one to apply</span>
+            <button class="ai-panel-close" onclick="closeAiPanel(this)">✕</button>
+        </div>
+        <div class="ai-options ai-options-stacked">
+            ${data.options.map(opt => `
+                <button class="ai-option-card" onclick="applySummary(this)" data-text="${escHtml(opt)}">
+                    ${escHtml(opt)}
+                </button>
+            `).join("")}
+        </div>`;
+        btnEl.disabled = false;
+    }, () => { btnEl.disabled = false; });
+}
+
+function applySummary(btnEl) {
+    cvData.personalDetails.summary = btnEl.dataset.text;
+    const ta = document.querySelector('#ep-body textarea[oninput*="summary"]');
+    if (ta) { ta.value = btnEl.dataset.text; updateWordCount(ta); }
+    btnEl.closest('.ai-options').querySelectorAll('.ai-option-card').forEach(b => b.classList.remove('applied'));
+    btnEl.classList.add('applied');
+    renderPreview(); autoSave();
+    showToast("Summary applied!", "success");
+}
+
+    function aiImproveInline(type, i, btnEl) {
+    const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
+    const it = sec.items[i];
+    const bullets = (it.bullets || []).filter(b => b.trim());
+    if (!bullets.length) { showToast("Add some bullet points first!", "info"); return; }
+
+    const panel = document.getElementById(`ai-panel-${type}-${i}`);
+    if (!panel) return;
+
+    panel.classList.add('open');
+    panel.innerHTML = `<div class="ai-loading"><span class="spinner"></span> Generating improved bullets…</div>`;
+    if (btnEl) btnEl.disabled = true;
+
+    const prompt = `Improve these CV bullets for "${it.role || it.name || "this role"}". For EACH original bullet, give 3 alternative rewrites using strong action verbs and quantifying impact where possible. Return ONLY valid JSON, no markdown, no commentary, in this exact shape:
+[
+  { "original": "original bullet text", "options": ["rewrite 1", "rewrite 2", "rewrite 3"] }
+]
+
+Original bullets:
+${bullets.map(b => `- ${b}`).join("\n")}`;
+
+    callmellowJSON(prompt, panel, (data) => {
+        renderBulletOptionsPanel(panel, type, i, data);
+        if (btnEl) btnEl.disabled = false;
+    }, () => { if (btnEl) btnEl.disabled = false; });
+}
+
+function renderBulletOptionsPanel(panel, type, i, data) {
+    const sec = cvData.sections.find(s => s.type === type);
+    const currentBullets = sec.items[i].bullets || [];
+
+    panel.innerHTML = `
+    <div class="ai-panel-hd">
+        <span>✨ Suggested rewrites — click one to apply</span>
+        <button class="ai-panel-close" onclick="closeAiPanel(this)">✕</button>
+    </div>
+    ${data.map((group) => {
+        const bulletIdx = currentBullets.findIndex(b => b.trim() === group.original.trim());
+        const safeIdx = bulletIdx === -1 ? 0 : bulletIdx;
+        return `
+        <div class="ai-bullet-group">
+            <p class="ai-orig">Original: "${escHtml(group.original)}"</p>
+            <div class="ai-options">
+                ${group.options.map(opt => `
+                    <button class="ai-option-card" onclick="applySingleBullet('${type}',${i},${safeIdx},this)" data-text="${escHtml(opt)}">
+                        ${escHtml(opt)}
+                    </button>
+                `).join("")}
+                <button class="ai-option-keep" onclick="dismissBulletGroup(this)">Keep original</button>
+            </div>
+        </div>`;
+    }).join("")}`;
+}
+
+function applySingleBullet(type, i, j, btnEl) {
+    const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
+    sec.items[i].bullets[j] = btnEl.dataset.text;
+
+    
+    const list = document.getElementById(`bullets-${type}-${i}`);
+    if (list) {
+        const rows = list.querySelectorAll('.bullet-row');
+        const row = rows[j];
+        if (row) row.querySelector('.bullet-input').value = btnEl.dataset.text;
     }
 
-    function aiImprove(type, i) {
-        if (!document.getElementById('ai-output')) { setStep(6); setTimeout(() => aiImprove(type, i), 200); return; }
-        const sec = cvData.sections.find(s => s.type === type); if (!sec || !sec.items[i]) return;
-        const it = sec.items[i];
-        const bullets = (it.bullets || []).join("\n");
-        if (!bullets.trim()) { showToast("Add some bullet points first!", "info"); return; }
-        setStep(6);
-        const out = document.getElementById('ai-output');
-        callmellow(
-            `Improve these CV bullets for "${it.role || it.name || "this role"}". Strong action verbs, quantify where possible. Return ONLY improved bullets, one per line starting with -.\n\n${bullets}`,
-            out,
-            text => {
-                const improved = text.trim().split(/\n/).map(l => l.replace(/^[-•*]\s*/,"").trim()).filter(Boolean);
-                out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Improved bullets:</p><div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:6px;padding:10px;margin-bottom:8px">${improved.map(b=>`<p style="margin:2px 0;padding-left:12px">• ${escHtml(b)}</p>`).join("")}</div><button class="btn btn-primary btn-sm" onclick="applyBullets(this,'${type}',${i})" data-bullets='${JSON.stringify(improved).replace(/'/g,"&#39;")}'>Apply these bullets</button>`;
-            }
-        );
-    }
+    
+    btnEl.closest('.ai-options').querySelectorAll('.ai-option-card').forEach(b => b.classList.remove('applied'));
+    btnEl.classList.add('applied');
+
+    renderPreview(); autoSave();
+    showToast("Bullet updated!", "success");
+}
 
     function applyBullets(btn, type, i) {
         const bullets = JSON.parse(btn.dataset.bullets);
@@ -1908,6 +1988,30 @@ async function callmellow(prompt, outputEl, onSuccess) {
             out,
             text => { out.innerHTML = `<p style="margin:0 0 6px;font-weight:600">Suggestions for ${escHtml(role)}:</p><div style="background:#F5F3FF;border:1px solid #C4B5FD;border-radius:6px;padding:10px;line-height:1.7">${escHtml(text.trim()).replace(/\n/g,"<br>")}</div>`; }
         );
+    }
+
+    async function callmellowJSON(prompt, panelEl, onSuccess, onError) {
+    if (!AI_BACKEND_CONFIGURED) {
+        panelEl.innerHTML = `<p class="ai-error">AI writing help isn't connected yet — this feature needs a backend set up first.</p>`;
+        if (onError) onError();
+        return;
+    }
+    try {
+        const resp = await fetch(AI_BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt })
+        });
+        if (!resp.ok) throw new Error(`Request failed (${resp.status})`);
+        const data = await resp.json();
+        let text = (data.response || "").trim();
+        text = text.replace(/^```json\s*/i, "").replace(/^```\s*/,"").replace(/```\s*$/,"");
+        const parsed = JSON.parse(text);
+        onSuccess(parsed);
+    } catch (err) {
+        panelEl.innerHTML = `<p class="ai-error">Error: ${escHtml(err.message)}. <button class="btn-ai" onclick="closeAiPanel(this)">Dismiss</button></p>`;
+        if (onError) onError();
+    }
     }
 
 
