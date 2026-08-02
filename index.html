@@ -60,14 +60,16 @@
 </head>
 <body data-view="landing">
   <div id="toast-container"></div>
-    <div class="quick-fab-wrap" id="quick-fab-wrap">
-  <div class="quick-fab-menu" id="quick-fab-menu">
-    <button class="qf-item" onclick="closeQuickFab();navigate('builder')">📄 Create CV</button>
-    <button class="qf-item qf-soon" disabled title="Coming soon">📥 Import CV<span class="qf-badge">Soon</span></button>
-    <button class="qf-item qf-soon" disabled title="Coming soon">✉️ Cover Letter<span class="qf-badge">Soon</span></button>
-  </div>
-  <button class="quick-fab" id="quick-fab" onclick="toggleQuickFab()" aria-label="Quick actions">+</button>
+
+  <!-- QUICK ACTION FAB (hidden inside the builder — that view has its own preview-fab) -->
+  <div class="quick-fab-wrap" id="quick-fab-wrap">
+    <div class="quick-fab-menu" id="quick-fab-menu">
+      <button class="qf-item" onclick="closeQuickFab();navigate('builder')">📄 Create CV</button>
+      <button class="qf-item" onclick="closeQuickFab();openImportModal()">📥 Import CV</button>
+      <button class="qf-item qf-soon" disabled title="Coming soon">✉️ Cover Letter<span class="qf-badge">Soon</span></button>
     </div>
+    <button class="quick-fab" id="quick-fab" onclick="toggleQuickFab()" aria-label="Quick actions">+</button>
+  </div>
 
   <!-- LANDING VIEW -->
   <div id="view-landing">
@@ -95,7 +97,7 @@
         </div>
         <div class="hero-proof">
           <div class="hstat"><strong>50,000+</strong><span>Resumes created</span></div>
-          <div class="hstat"><strong>40</strong><span>Expert templates</span></div>
+          <div class="hstat"><strong>43</strong><span>Expert templates</span></div>
           <div class="hstat"><strong>ATS</strong><span>Optimized</span></div>
           <div class="hstat"><strong>AI</strong><span>Writing help</span></div>
         </div>
@@ -128,7 +130,7 @@
         <div class="feat-card"><div class="feat-icon">⚡</div><h3>Fast &amp; Easy</h3><p>Fill in details, pick a template, and download a polished PDF in under 15 minutes.</p></div>
         <div class="feat-card"><div class="feat-icon">✨</div><h3>AI Writing Help</h3><p>One click rewrites your bullets with stronger language keeping it truthful.</p></div>
         <div class="feat-card"><div class="feat-icon">📊</div><h3>ATS Checker</h3><p>Flags keyword gaps and formatting issues before you apply.</p></div>
-        <div class="feat-card"><div class="feat-icon">🎨</div><h3>40 Pro Templates</h3><p>From classic to modern, ATS-friendly and recruiter-approved.</p></div>
+        <div class="feat-card"><div class="feat-icon">🎨</div><h3>43 Pro Templates</h3><p>From classic to modern, ATS-friendly and recruiter-approved.</p></div>
         <div class="feat-card"><div class="feat-icon">📄</div><h3>PDF Export</h3><p>Download clean PDF with one click.</p></div>
         <div class="feat-card"><div class="feat-icon">💾</div><h3>Auto-Saved</h3><p>Your resume is saved in your browser. Pick up where you left off.</p></div>
       </div>
@@ -200,6 +202,7 @@
     <nav class="gnav">
       <button class="gnav-back" onclick="navigate('landing')">← Back</button>
       <div class="logo">Mellow<em>CV FACTORY</em></div>
+      <button class="btn btn-outline btn-sm" onclick="openImportModal()">📥 Import CV</button>
       <button class="btn btn-primary btn-sm" onclick="createNewResume()">+ New Resume</button>
     </nav>
     <div style="max-width:1100px;margin:20px auto;padding:0 16px;">
@@ -217,7 +220,7 @@
         <div class="bh-logo">Mellow<em>CV FACTORY</em></div>
       </div>
       <div class="bh-r">
-        <div class="autosave"><div class="save-dot" id="save-dot"></div>Auto-saved</div>
+        <div class="autosave"><div class="save-dot" id="save-dot"></div><span id="autosave-label">Auto-saved</span></div>
         
         <button class="btn btn-outline btn-sm" id="ep-toggle-btn" onclick="toggleEditorPanel()" title="Toggle editor">◀ Editor</button>
         
@@ -255,16 +258,15 @@
         </div>
       </div>
       <div class="ats-p" id="ats-panel"></div>
-      <div class="editor-statusbar" id="editor-statusbar">
-  <button class="sb-item" id="sb-ats" onclick="runATSCheck()" title="Open full ATS check">
-    <span class="sb-dot" id="sb-ats-dot"></span><span id="sb-ats-txt">ATS —/9</span>
-  </button>
-  <div class="sb-item" id="sb-length"><span id="sb-length-txt">0 words</span></div>
-  <div class="sb-item" id="sb-ready">
-    <span class="sb-dot" id="sb-ready-dot"></span><span id="sb-ready-txt">Checking…</span>
-  </div>
-      
-
+    </div>
+    <div class="editor-statusbar" id="editor-statusbar">
+      <button class="sb-item" id="sb-ats" onclick="runATSCheck()" title="Open full ATS check">
+        <span class="sb-dot" id="sb-ats-dot"></span><span id="sb-ats-txt">ATS —/9</span>
+      </button>
+      <div class="sb-item" id="sb-length"><span id="sb-length-txt">0 words</span></div>
+      <div class="sb-item" id="sb-ready">
+        <span class="sb-dot" id="sb-ready-dot"></span><span id="sb-ready-txt">Checking…</span>
+      </div>
     </div>
     <button class="preview-fab" id="preview-fab" onclick="toggleMobilePreview()" aria-label="Toggle CV preview">👁</button>
     <div class="preview-slide-overlay" id="preview-slide-overlay">
@@ -273,6 +275,33 @@
         <button class="preview-slide-close" onclick="closeMobilePreview()">✕</button>
       </div>
       <div class="preview-slide-body" id="preview-slide-body"></div>
+    </div>
+  </div>
+
+  <!-- TIPS MODAL -->
+  <div class="tips-modal" id="tips-modal">
+    <div class="tips-modal-content">
+      <button class="tips-close" onclick="closeTips()" aria-label="Close tips">✕</button>
+      <h3 id="tips-modal-title">Tips</h3>
+      <div id="tips-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- IMPORT CV MODAL -->
+  <div class="tips-modal" id="import-modal">
+    <div class="tips-modal-content">
+      <button class="tips-close" onclick="closeImportModal()" aria-label="Close import">✕</button>
+      <h3>Import your CV</h3>
+      <p style="font-size:13px;color:var(--t2);line-height:1.6;margin:0 0 14px">
+        Upload an existing CV and we'll pull the text into a new resume you can edit and restyle.
+        Supports <strong>.docx</strong>, <strong>.txt</strong> and <strong>.md</strong> files. PDF import isn't supported yet — copy/paste from a PDF into a .txt file if that's what you have.
+      </p>
+      <input type="file" id="import-file-input" accept=".docx,.txt,.md" style="display:none" onchange="handleImportFile(this)">
+      <button class="import-dropzone" id="import-dropzone" onclick="document.getElementById('import-file-input').click()">
+        <span style="font-size:22px">📄</span>
+        <span>Click to choose a file</span>
+      </button>
+      <div id="import-status" style="margin-top:12px"></div>
     </div>
   </div>
 
