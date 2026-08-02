@@ -2014,10 +2014,16 @@ async function exportPDFDirect() {
             // the final page's background/sidebar continues to the bottom
             // instead of cutting off into blank white space.
             let paddedPages = Math.ceil(imgH / pxPerPage);
-            // If content spills onto an extra page by only a sliver (a few
-            // stray pixels of rounding/anti-aliasing, not real content),
-            // don't generate a whole extra near-empty page for it.
-            const spill = imgH % pxPerPage;
+// Only keep a trailing page if it has a meaningful amount of real content.
+// A tiny sliver spilling over (margins, shadows, rounding) should NOT force
+// a whole extra blank page — require at least 8% of a page's height before
+// we treat the overflow as "real" content worth its own page.
+const spill = imgH % pxPerPage;
+const MIN_MEANINGFUL_SPILL = pxPerPage * 0.08;
+if (spill > 0 && spill < MIN_MEANINGFUL_SPILL && paddedPages > 1) {
+    paddedPages -= 1;
+}
+const paddedH = paddedPages * pxPerPage;
             if (spill > 0 && spill <= 4 && paddedPages > 1) paddedPages -= 1;
             const paddedH = paddedPages * pxPerPage;
             let sourceCanvas = canvas;
