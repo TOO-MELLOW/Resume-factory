@@ -1285,20 +1285,17 @@ function stepPersonal(p) {
                 <span class="word-count ${cls}">${wc} words</span>
             </div>
             <textarea rows="4" oninput="updatePD('summary',this.value);updateWordCount(this)">${escHtml(p.summary)}</textarea>
-            ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your experience level, key skills, and what you bring.</div>` : ""}
-            <textarea rows="4" oninput="updatePD('summary',this.value);updateWordCount(this)">${escHtml(p.summary)}</textarea>
 ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your experience level, key skills, and what you bring.</div>` : ""}
 <button class="btn-ai" onclick="aiImproveSummaryInline(this)">✨ AI Improve Summary</button>
 <div class="ai-inline-panel" id="ai-summary-panel"></div>
-        </div>
+</div>
         <p class="ep-sh">Links (optional)</p>
         ${(p.links || []).map((l, i) => `
         <div class="f-row">
-            <div class="f"><label>Label</label><input value="${escHtml(l.label)}" oninput="updateLink(${i},'label',this.value)" placeholder="e.g. LinkedIn"></div>
+           
             <div class="f"><label>URL</label><input value="${escHtml(l.url)}" oninput="updateLink(${i},'url',this.value)" placeholder="https://"></div>
             <button class="btn-del" style="align-self:flex-end;margin-bottom:8px" onclick="removeLink(${i})">✕</button>
-        </div>`).join("")}
-        <button class="btn-add" onclick="addLink()">+ Add Link</button>`;
+        </div>
     }
 
     function stepSection(type) {
@@ -1349,38 +1346,35 @@ ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your expe
         return `<div class="date-picker"><select onchange="updateDateField('${prefix}','${field}','year',this.value)">${yearOpts.join("")}</select><select onchange="updateDateField('${prefix}','${field}','month',this.value)">${monthOpts}</select></div>`;
     }
 
-    function expCard(it, i) {
-        const bullets = it.bullets || [];
-        const hasWeak = bullets.some(b => b.length > 0 && b.length < 30);
-        return `
-        <div class="icard" draggable="true" data-type="experience" data-idx="${i}">
-            <div class="icard-top">
-                <span class="icard-lbl">${escHtml(it.role || "New Role")}</span>
-                <button class="btn-del" onclick="delItem('experience',${i})">Delete</button>
-            </div>
-            <div class="f"><label>Job Title</label><input value="${escHtml(it.role)}" oninput="updateItem('experience',${i},'role',this.value)"></div>
-            <div class="f-row">
-                <div class="f"><label>Company</label><input value="${escHtml(it.company)}" oninput="updateItem('experience',${i},'company',this.value)"></div>
-                <div class="f"><label>Location</label><input value="${escHtml(it.location)}" oninput="updateItem('experience',${i},'location',this.value)"></div>
-            </div>
-            <div class="f-row">
-                <div class="f"><label>Start Date</label>${datePicker(`experience-${i}`, "startDate", it.startDate)}</div>
-                <div class="f"><label>End Date</label>${it.current ? "<p style='font-size:12px;color:var(--accent);padding-top:8px'>Present</p>" : datePicker(`experience-${i}`, "endDate", it.endDate)}</div>
-            </div>
-            <div class="f-check"><label><input type="checkbox" ${it.current ? "checked" : ""} onchange="updateItem('experience',${i},'current',this.checked);setStep(1)"> Currently working here</label></div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
-                <label style="font-size:11px;font-weight:600;color:var(--t2)">Bullet Points</label>
-                <button class="btn-ai" onclick="aiImprove('experience',${i})" ${bullets.length ? "" : "disabled"}>✨ AI Improve</button>
-            </div>
-            ${hasWeak ? `<div class="weak-hint">💡 Some bullets are short. Add specific achievements and numbers for more impact.</div>` : ""}
-            <div class="bullet-list" id="bullets-experience-${i}">${bullets.map((b, j) => bulletRow(b, j, "experience", i)).join("")}</div>
+   function expCard(it, i) {
+    const bullets = it.bullets || [];
+    const hasWeak = bullets.some(b => b.length > 0 && b.length < 30);
+    return `
+    <div class="icard" draggable="true" data-type="experience" data-idx="${i}">
+        <div class="icard-top">
+            <span class="icard-lbl">${escHtml(it.role || "New Role")}</span>
+            <button class="btn-del" onclick="delItem('experience',${i})">Delete</button>
+        </div>
+        <div class="f"><label>Job Title</label><input value="${escHtml(it.role)}" oninput="updateItem('experience',${i},'role',this.value)"></div>
+        <div class="f-row">
+            <div class="f"><label>Company</label><input value="${escHtml(it.company)}" oninput="updateItem('experience',${i},'company',this.value)"></div>
+            <div class="f"><label>Location</label><input value="${escHtml(it.location)}" oninput="updateItem('experience',${i},'location',this.value)"></div>
+        </div>
+        <div class="f-row">
+            <div class="f"><label>Start Date</label>${datePicker(`experience-${i}`, "startDate", it.startDate)}</div>
+            <div class="f"><label>End Date</label>${it.current ? "<p style='font-size:12px;color:var(--accent);padding-top:8px'>Present</p>" : datePicker(`experience-${i}`, "endDate", it.endDate)}</div>
+        </div>
+        <div class="f-check"><label><input type="checkbox" ${it.current ? "checked" : ""} onchange="updateItem('experience',${i},'current',this.checked);setStep(1)"> Currently working here</label></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
+            <label style="font-size:11px;font-weight:600;color:var(--t2)">Bullet Points</label>
             <button class="btn-ai" onclick="aiImproveInline('experience',${i},this)" ${bullets.length ? "" : "disabled"}>✨ AI Improve</button>
-           <div class="bullet-list" id="bullets-experience-${i}">${bullets.map((b, j) => bulletRow(b, j, "experience", i)).join("")}</div>
-<button class="btn-add" style="margin-top:0" onclick="addBullet('experience',${i})">+ Add bullet</button>
-<div class="ai-inline-panel" id="ai-panel-experience-${i}"></div>
-</div>`; 
-        </div>`;
-    }
+        </div>
+        ${hasWeak ? `<div class="weak-hint">💡 Some bullets are short. Add specific achievements and numbers for more impact.</div>` : ""}
+        <div class="bullet-list" id="bullets-experience-${i}">${bullets.map((b, j) => bulletRow(b, j, "experience", i)).join("")}</div>
+        <button class="btn-add" style="margin-top:0" onclick="addBullet('experience',${i})">+ Add bullet</button>
+        <div class="ai-inline-panel" id="ai-panel-experience-${i}"></div>
+    </div>`;
+}
 
     function eduCard(it, i) {
         return `
