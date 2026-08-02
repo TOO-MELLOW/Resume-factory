@@ -1956,14 +1956,36 @@ async function exportPDFDirect() {
     clone.innerHTML = renderTemplateContent(cvData, currentTemplateId);
 
     document.body.appendChild(clone);
-    await new Promise(r => setTimeout(r, 400));
+    // Wait for web fonts to actually finish loading (Fraunces/Inter come from
+    // Google Fonts) before measuring height — a flat short timeout isn't
+    // reliable on slow connections, and measuring/capturing before fonts swap
+    // in causes a mismatch between the measured height and the real rendered
+    // height, which showed up as extra blank space at the bottom of the PDF.
+    try {
+        if (document.fonts && document.fonts.ready) {
+            await Promise.race([
+                document.fonts.ready,
+                new Promise(r => setTimeout(r, 2000)) // safety cap, don't hang forever
+            ]);
+        }
+    } catch (e) { /* ignore, fall through to capture anyway */ }
+    await new Promise(r => setTimeout(r, 150));
+
+    // Resolve the real paper color to paint the canvas with. Using a
+    // transparent background (backgroundColor: null) here is what caused
+    // solid BLACK blocks/pages: canvas.toDataURL('image/jpeg', ...) has no
+    // alpha channel, so any unpainted/transparent pixel is flattened to
+    // black rather than left blank.
+    const paperColor = ov.paperColor
+        || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
+        || '#FAF6EF';
 
     try {
         const canvas = await html2canvas(clone, {
             scale: 2,
             useCORS: true,
             allowTaint: true,
-            backgroundColor: null,
+            backgroundColor: paperColor,
             width: A4_W,
             height: Math.max(clone.scrollHeight, A4_H),
             windowWidth: A4_W,
@@ -1991,7 +2013,12 @@ async function exportPDFDirect() {
             // full page height, extending the last row of pixels downward, so
             // the final page's background/sidebar continues to the bottom
             // instead of cutting off into blank white space.
-            const paddedPages = Math.ceil(imgH / pxPerPage);
+            let paddedPages = Math.ceil(imgH / pxPerPage);
+            // If content spills onto an extra page by only a sliver (a few
+            // stray pixels of rounding/anti-aliasing, not real content),
+            // don't generate a whole extra near-empty page for it.
+            const spill = imgH % pxPerPage;
+            if (spill > 0 && spill <= 4 && paddedPages > 1) paddedPages -= 1;
             const paddedH = paddedPages * pxPerPage;
             let sourceCanvas = canvas;
             if (paddedH > imgH) {
@@ -1999,6 +2026,8 @@ async function exportPDFDirect() {
                 padded.width = imgW;
                 padded.height = paddedH;
                 const pctx = padded.getContext('2d');
+                pctx.fillStyle = paperColor;
+                pctx.fillRect(0, 0, imgW, paddedH);
                 pctx.drawImage(canvas, 0, 0);
                 // Stretch the last row of real pixels down to fill the gap.
                 pctx.drawImage(canvas, 0, imgH - 1, imgW, 1, 0, imgH, imgW, paddedH - imgH);
@@ -2011,7 +2040,10 @@ async function exportPDFDirect() {
                 const sliceCanvas = document.createElement('canvas');
                 sliceCanvas.width = imgW;
                 sliceCanvas.height = sliceH;
-                sliceCanvas.getContext('2d').drawImage(sourceCanvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+                const sctx = sliceCanvas.getContext('2d');
+                sctx.fillStyle = paperColor;
+                sctx.fillRect(0, 0, imgW, sliceH);
+                sctx.drawImage(sourceCanvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
                 const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
                 if (yOffset > 0) pdf.addPage();
                 pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
