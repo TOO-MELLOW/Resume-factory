@@ -1058,6 +1058,12 @@ function duplicateResume(id) { const copy=JSON.parse(JSON.stringify(allResumes[i
 function renameResume(id)    { const n=prompt('Enter new name:',allResumes[id].personalDetails.fullName); if(n&&n.trim()){ allResumes[id].personalDetails.fullName=n.trim(); saveAllResumes(); renderManager(); if(currentCvId===id){cvData=allResumes[id];renderPreview();updatePaLabel();} showToast('Renamed','success'); } }
 function deleteResume(id)    { if(!confirm('Delete this resume?'))return; delete allResumes[id]; saveAllResumes(); renderManager(); if(currentCvId===id){const ids=Object.keys(allResumes); if(ids.length)setCurrentResume(ids[0]); else createNewResume();} showToast('Deleted','info'); }
 
+const NAV_VIEWS = ['landing', 'gallery', 'builder', 'manager'];
+function hashToView(hash) {
+    const v = (hash || '').replace(/^#/, '');
+    return NAV_VIEWS.includes(v) ? v : 'landing';
+}
+
 function navigate(view, opts={}) {
     closeMobilePreview();
     document.body.setAttribute('data-view', view);
@@ -1069,7 +1075,22 @@ function navigate(view, opts={}) {
     if (atsPanelOpen) { atsPanelOpen=false; document.getElementById('ats-panel').classList.remove('open'); }
     closeTips();
     document.getElementById('preview-area').classList.remove('preview-full');
+
+    // Keep the URL and the browser back/forward button in sync with the
+    // visible view. Previously the URL never changed on navigation, so a
+    // click gave no visible confirmation that anything had happened, and
+    // the back button would leave the site instead of going to the
+    // previous view.
+    if (!opts.skipHistory) {
+        const hash = view === 'landing' ? '#' : '#' + view;
+        if (location.hash !== hash) history.pushState({ view }, '', hash);
+    }
 }
+
+window.addEventListener('popstate', (e) => {
+    const view = (e.state && e.state.view) || hashToView(location.hash);
+    navigate(view, { skipHistory: true });
+});
 
 function toggleTips() {
     const modal = document.getElementById('tips-modal');
@@ -1151,9 +1172,26 @@ function scalePreviewToFit() {
     );
 }
 function scaleMobilePreviewToFit() {
+    // The mobile slide-over preview is meant to reflow full-width and scroll
+    // vertically (preview-slide-body already has overflow:auto). It must NOT
+    // be shrunk to fit the whole resume into one screen height like the
+    // desktop "fit to window" toggle does — that either crushed the text to
+    // an unreadable size or clipped the bottom of longer resumes.
+    // We only guard against horizontal overflow (e.g. a template with a hard
+    // min-width wider than the phone screen); vertical scaling is never applied.
     const body = document.getElementById('preview-slide-body');
     const page = body ? body.querySelector('.page') : null;
-    scalePageToFit(body, page);
+    if (!body || !page) return;
+    page.style.transform = '';
+    page.style.marginBottom = '';
+    const bw = body.getBoundingClientRect().width;
+    const pw = page.getBoundingClientRect().width;
+    if (pw > bw + 1) {
+        const scale = bw / pw;
+        page.style.transformOrigin = 'top center';
+        page.style.transform = `scale(${scale})`;
+        page.style.marginBottom = `${page.getBoundingClientRect().height * (scale - 1)}px`;
+    }
 }
 
 function renderPreview(pageEl) {
@@ -1775,18 +1813,34 @@ function stepPersonal(p) {
     }
 
     // ---------- AI ----------
+// NOTE: This used to call http://localhost:11434 (a local Ollama server).
+// That only ever worked on the original developer's machine — for every
+// real visitor on the deployed site it's a request to their own laptop,
+// which fails every time. Rather than ship that silent failure (or fake a
+// working response), this shows an honest "not connected yet" message.
+//
+// To make this feature real, point it at a proper backend endpoint that
+// calls an LLM API server-side (e.g. a Vercel serverless function that
+// holds the API key). Never put a real AI-provider API key directly in
+// this client-side file — anyone can read it in the browser dev tools.
+const AI_BACKEND_CONFIGURED = false; // flip to true once a real endpoint exists below
+const AI_BACKEND_URL = ""; // e.g. "/api/ai-generate"
+
 async function callmellow(prompt, outputEl, onSuccess) {
     outputEl.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:#1B2A4A;color:#fff;padding:8px 12px;border-radius:6px"><span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> Thinking...</div>`;
+
+    if (!AI_BACKEND_CONFIGURED) {
+        outputEl.innerHTML = `<p style="color:#B45309;font-size:12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:8px 10px">AI writing help isn't connected yet — this feature needs a backend set up first. Your CV editing, templates, and download all work normally without it.</p>`;
+        return;
+    }
+
     try {
-        const resp = await fetch("http://localhost:11434/api/generate", {
+        const resp = await fetch(AI_BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                model: "qwen2.5", 
-                prompt: prompt,
-                stream: false
-            })
+            body: JSON.stringify({ prompt })
         });
+        if (!resp.ok) throw new Error(`Request failed (${resp.status})`);
         const data = await resp.json();
         const text = data.response;
         if (text) onSuccess(text);
@@ -1868,7 +1922,6 @@ async function callmellow(prompt, outputEl, onSuccess) {
 
 // Button calls this — goes through paywall gate
 function exportPDF() {
-    alert('1. Button clicked');
     attemptDownload('cv', currentTemplateId);
 }
 
@@ -2042,7 +2095,11 @@ window.addEventListener('resize', () => {
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchAllTemplates(); 
     loadData();
-    if (!loadSharedResume()) navigate('landing');
+    if (!loadSharedResume()) {
+        const initialView = hashToView(location.hash);
+        history.replaceState({ view: initialView }, '', initialView === 'landing' ? '#' : '#' + initialView);
+        navigate(initialView, { skipHistory: true });
+    }
     renderHeroCv();
     renderShowcaseStrip();
 });
