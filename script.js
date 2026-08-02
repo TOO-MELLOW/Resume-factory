@@ -1002,15 +1002,38 @@ function loadData() {
         cvData = def; currentTemplateId = def.meta.templateId || 'modern-01'; usingDemoData = true;
     }
 }
+let lastSavedAt = null;
 function autoSave() {
     if (!cvData) return;
     allResumes[currentCvId] = cvData;
     saveAllResumes();
+    lastSavedAt = Date.now();
+    updateAutosaveLabel();
     const dot = document.getElementById('save-dot');
     if (dot) { dot.classList.add('saving'); setTimeout(()=>dot.classList.remove('saving'),600); }
     clearTimeout(_saveToastTimer);
     _saveToastTimer = setTimeout(()=>showToast('Auto-saved','success'), 1500);
 }
+function updateAutosaveLabel() {
+    const el = document.getElementById('autosave-label');
+    if (!el) return;
+    if (!lastSavedAt) { el.textContent = 'Not saved yet'; return; }
+    const secs = Math.round((Date.now() - lastSavedAt) / 1000);
+    if (secs < 3) el.textContent = 'Saved just now';
+    else if (secs < 60) el.textContent = `Saved ${secs}s ago`;
+    else {
+        const mins = Math.round(secs / 60);
+        el.textContent = mins === 1 ? 'Saved 1 min ago' : `Saved ${mins} min ago`;
+    }
+}
+setInterval(updateAutosaveLabel, 1000);
+function toggleQuickFab() { const w = document.getElementById('quick-fab-wrap'); if (w) w.classList.toggle('open'); }
+function closeQuickFab()  { const w = document.getElementById('quick-fab-wrap'); if (w) w.classList.remove('open'); }
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('quick-fab-wrap');
+    if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) closeQuickFab();
+});
+
 function showToast(msg, type='info') {
     const c = document.getElementById('toast-container');
     const t = document.createElement('div');
@@ -1072,6 +1095,8 @@ function navigate(view, opts={}) {
     window.scrollTo(0,0);
     if (atsPanelOpen) { atsPanelOpen=false; document.getElementById('ats-panel').classList.remove('open'); }
     closeTips();
+    closeQuickFab();
+    closeImportModal();
     document.getElementById('preview-area').classList.remove('preview-full');
 
     // Keep the URL and the browser back/forward button in sync with the
@@ -1090,26 +1115,130 @@ window.addEventListener('popstate', (e) => {
     navigate(view, { skipHistory: true });
 });
 
+// Categorized tips per editor step. Each step has a short intro plus tips
+// grouped by category (Writing / ATS / Formatting / Mistakes to avoid) —
+// only the categories relevant to that step are included, so some steps
+// have 2 categories and some have 4.
+const TIPS_CONTENT = {
+    0: { title: "Personal Details & Summary", groups: [
+        { cat: "Writing", tips: [
+            "Aim for 40–80 words: your experience level, 2–3 top skills, and what you're looking for.",
+            "Mention your target job title in the summary — it's the fastest way for a recruiter (and an ATS) to place you."
+        ]},
+        { cat: "ATS", tips: [
+            "Use a real email address and phone number in a standard format — ATS parsers look for these first."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "Avoid generic filler like \"hard-working team player\" with nothing to back it up — save specifics for your bullets.",
+            "Don't write in the third person or use \"I\" — CV summaries are usually written without pronouns."
+        ]}
+    ]},
+    1: { title: "Work Experience", groups: [
+        { cat: "Writing", tips: [
+            "Start each bullet with a strong action verb: Led, Built, Reduced, Managed, Delivered.",
+            "Put your strongest, most relevant bullet first in each role — recruiters skim top-down."
+        ]},
+        { cat: "ATS", tips: [
+            "Mirror keywords and phrasing from the job ad where it's genuinely true of your experience."
+        ]},
+        { cat: "Formatting", tips: [
+            "3–5 bullets per role is the sweet spot. Drag bullets to reorder them within a role."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "Don't just list duties — show outcomes. \"Handled customer queries\" is weaker than \"Resolved 10+ queries per shift, lifting satisfaction 15%.\"",
+            "Avoid vague numbers-free claims when a real number is available — even an estimate is more convincing than none."
+        ]}
+    ]},
+    2: { title: "Education & Projects", groups: [
+        { cat: "Writing", tips: [
+            "Only include coursework or projects that are relevant to the role you're targeting.",
+            "For projects, briefly say what you built and what impact or result it had."
+        ]},
+        { cat: "Formatting", tips: [
+            "List your most recent qualification first."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "Once you have 2+ years of work experience, your matric year and school-level detail matter less — keep it brief."
+        ]}
+    ]},
+    3: { title: "Skills & Languages", groups: [
+        { cat: "Writing", tips: [
+            "Order skills so the most job-relevant ones appear first — don't just list them alphabetically."
+        ]},
+        { cat: "ATS", tips: [
+            "Use the exact skill name the job ad uses (e.g. \"Microsoft Excel\" not \"MS Excel\") if that's what they wrote — exact-match keywords score better."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "\"Hard worker\" and \"good communicator\" are traits, not skills — those belong in your summary, not your skills list.",
+            "Don't claim \"Expert\" level unless you could defend it in an interview."
+        ]}
+    ]},
+    4: { title: "Extra Sections", groups: [
+        { cat: "Writing", tips: [
+            "Only add a References section if the job ad asks for it — \"References available on request\" wastes space otherwise.",
+            "Interests are optional. Only include ones that say something useful (leadership, teamwork, a relevant hobby)."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "Skip personal details like ID number or marital status unless local convention or the application specifically asks for them."
+        ]}
+    ]},
+    5: { title: "Design & Theme", groups: [
+        { cat: "Formatting", tips: [
+            "Stick to one accent colour and the template's default fonts — consistency reads as more professional than variety."
+        ]},
+        { cat: "ATS", tips: [
+            "If you're applying through a large company's online system, prefer an \"ATS\" or \"Practical\" category template — heavy multi-column or graphic layouts can scramble automated parsing."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "Don't shrink the font below a comfortable reading size just to fit one page — trim content instead."
+        ]}
+    ]},
+    6: { title: "AI Tools & ATS Check", groups: [
+        { cat: "ATS", tips: [
+            "Paste the actual job description into the keyword-match box — generic \"improve my CV\" prompts miss role-specific keywords.",
+            "Missing keywords aren't automatically bad — only add ones that are honestly true of your experience."
+        ]},
+        { cat: "Writing", tips: [
+            "Use AI suggestions as a starting point, then edit them into your own voice — recruiters can spot generic AI phrasing."
+        ]},
+        { cat: "Mistakes to avoid", tips: [
+            "Don't apply an AI rewrite that overstates what you did — stick with the version that's most specific and still true."
+        ]}
+    ]}
+};
+
 function toggleTips() {
     const modal = document.getElementById('tips-modal');
     if (!modal) return;
     modal.classList.toggle('open');
-    if (modal.classList.contains('open')) {
-        const stepTips = {
-            0:"Fill in your personal details and summary. Include a professional summary highlighting key strengths.",
-            1:"Add work experience. Use strong action verbs and quantify achievements. Drag bullets to reorder.",
-            2:"List education and certifications. Include relevant coursework and honours.",
-            3:"Add skills and languages. Group by proficiency level.",
-            4:"Add extra sections like projects, references, or interests.",
-            5:"Customise the design: template, accent colour, paper colour, and scale.",
-            6:"Use AI to improve bullets or summary, check ATS compatibility, or copy role-based suggestions."
-        };
-        const body = document.getElementById('tips-modal-body');
-        if (body) body.innerHTML = `<p>${stepTips[currentStep]||'Select a tab for tips.'}</p>`;
-    }
+    if (modal.classList.contains('open')) renderTipsModal();
+}
+function renderTipsModal() {
+    const titleEl = document.getElementById('tips-modal-title');
+    const body = document.getElementById('tips-modal-body');
+    if (!body) return;
+    const entry = TIPS_CONTENT[currentStep];
+    if (!entry) { body.innerHTML = `<p>Select a tab for tips.</p>`; return; }
+    if (titleEl) titleEl.textContent = `Tips: ${entry.title}`;
+    body.innerHTML = entry.groups.map(g => `
+        <p class="tip-cat">${escHtml(g.cat)}</p>
+        <ul class="tip-list">${g.tips.map(t => `<li>${escHtml(t)}</li>`).join("")}</ul>
+    `).join("");
 }
 function closeTips() {
     const modal = document.getElementById('tips-modal');
+    if (modal) modal.classList.remove('open');
+}
+
+function openImportModal() {
+    const modal = document.getElementById('import-modal');
+    if (!modal) return;
+    document.getElementById('import-status').innerHTML = '';
+    document.getElementById('import-file-input').value = '';
+    modal.classList.add('open');
+}
+function closeImportModal() {
+    const modal = document.getElementById('import-modal');
     if (modal) modal.classList.remove('open');
 }
 
@@ -1202,6 +1331,7 @@ function renderPreview(pageEl) {
     el.style.setProperty('--spacing', ov.spacingScale || 1);
     
     updateMobilePreview();
+    updateStatusBar();
     requestAnimationFrame(scalePreviewToFit);
 }
 
@@ -1231,6 +1361,8 @@ function setStep(n) {
     document.querySelectorAll('.ep-tab').forEach(t => t.classList.toggle('active', +t.dataset.step === n));
     document.getElementById('ep-body').innerHTML = stepContent(n);
     wireStepEvents();
+    const tipsModal = document.getElementById('tips-modal');
+    if (tipsModal && tipsModal.classList.contains('open')) renderTipsModal();
 }
 function stepContent(n) {
     if (!cvData) return "";
@@ -1812,6 +1944,32 @@ function customCard(it, i) {
         return `<p style="font-size:11px;color:var(--t2);margin:0 0 6px">Words in the job description not found in your CV:</p><div style="display:flex;flex-wrap:wrap;gap:4px">${missing.map(w => `<span style="background:#FEF3C7;color:#92400E;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #FDE68A">${w}</span>`).join("")}</div>`;
     }
 
+    // ---------- BOTTOM STATUS BAR (surfaces the same ATS checks as the side panel, always visible) ----------
+    function updateStatusBar() {
+        if (!cvData) return;
+        const bar = document.getElementById('editor-statusbar');
+        if (!bar) return;
+
+        const checks = atsChecks();
+        const score  = checks.filter(c => c.pass).length;
+        const total  = checks.length;
+        const atsTxt = document.getElementById('sb-ats-txt');
+        const atsDot = document.getElementById('sb-ats-dot');
+        if (atsTxt) atsTxt.textContent = `ATS ${score}/${total}`;
+        if (atsDot) atsDot.className = 'sb-dot ' + (score === total ? 'good' : score >= Math.ceil(total * 0.6) ? 'warn' : 'bad');
+
+        const words = buildResumeText().trim().split(/\s+/).filter(Boolean).length;
+        const lenTxt = document.getElementById('sb-length-txt');
+        if (lenTxt) lenTxt.textContent = `${words} words`;
+
+        const p = cvData.personalDetails;
+        const hasCore = !!(p.fullName && p.email && cvData.sections.some(s => s.visible && s.items.length));
+        const readyTxt = document.getElementById('sb-ready-txt');
+        const readyDot = document.getElementById('sb-ready-dot');
+        if (readyTxt) readyTxt.textContent = hasCore ? 'Ready to export' : 'Add name, email & a section';
+        if (readyDot) readyDot.className = 'sb-dot ' + (hasCore ? 'good' : 'warn');
+    }
+
     
 const AI_BACKEND_CONFIGURED = true;
 const AI_BACKEND_URL = "/api/ai-generate";
@@ -2018,6 +2176,145 @@ function applySingleBullet(type, i, j, btnEl) {
     }
     }
 
+// ---------- IMPORT CV FROM DEVICE (.docx / .txt / .md only — no PDF, see roadmap) ----------
+let _mammothLoadPromise = null;
+function loadMammoth() {
+    if (window.mammoth) return Promise.resolve();
+    if (_mammothLoadPromise) return _mammothLoadPromise;
+    _mammothLoadPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Could not load the .docx reader — check your connection and try again.'));
+        document.head.appendChild(s);
+    });
+    return _mammothLoadPromise;
+}
+async function extractDocxText(file) {
+    await loadMammoth();
+    const buffer = await file.arrayBuffer();
+    const result = await window.mammoth.extractRawText({ arrayBuffer: buffer });
+    return result.value || '';
+}
+
+function importSpinner(label) {
+    return `<div class="ai-loading"><span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(55,48,163,0.25);border-top-color:#3730A3;border-radius:50%;animation:spin .8s linear infinite"></span> ${escHtml(label)}</div>`;
+}
+
+async function handleImportFile(input) {
+    const file = input.files[0]; if (!file) return;
+    const status = document.getElementById('import-status');
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!['docx','txt','md'].includes(ext)) {
+        status.innerHTML = `<p class="ai-error">Unsupported file type. Please choose a .docx, .txt or .md file.</p>`;
+        return;
+    }
+    status.innerHTML = importSpinner(`Reading ${file.name}…`);
+
+    let rawText = '';
+    try {
+        rawText = ext === 'docx' ? await extractDocxText(file) : await file.text();
+    } catch (err) {
+        status.innerHTML = `<p class="ai-error">Couldn't read that file: ${escHtml(err.message)}</p>`;
+        return;
+    }
+
+    rawText = (rawText || '').trim();
+    if (rawText.length < 30) {
+        status.innerHTML = `<p class="ai-error">That file doesn't seem to contain readable CV text. Try a different file.</p>`;
+        return;
+    }
+    const truncated = rawText.length > 6000;
+    const text = rawText.slice(0, 6000);
+
+    status.innerHTML = importSpinner('Extracting your details…');
+    callmellowJSON(buildImportPrompt(text), status, (parsed) => finalizeImportedResume(parsed, truncated), null);
+}
+
+const IMPORT_SECTION_ORDER  = ["experience","education","projects","skills","languages","certificates","references","interests","custom"];
+const IMPORT_SECTION_TITLES = { experience:"Experience", education:"Education", projects:"Projects", skills:"Skills", languages:"Languages", certificates:"Certificates", references:"References", interests:"Interests", custom:"Additional Information" };
+
+function buildImportPrompt(text) {
+    return `You are extracting structured CV data from raw resume text. Return ONLY valid JSON (no markdown fences, no commentary) matching exactly this shape:
+{
+  "personalDetails": { "fullName": "", "jobTitle": "", "email": "", "phone": "", "location": "", "summary": "" },
+  "sections": {
+    "experience":   [ { "role": "", "company": "", "location": "", "startDate": "YYYY-MM or YYYY or empty", "endDate": "YYYY-MM or YYYY or empty", "current": false, "bullets": [] } ],
+    "education":    [ { "qualification": "", "institution": "", "location": "", "startDate": "", "endDate": "", "current": false, "notes": "" } ],
+    "projects":     [ { "name": "", "url": "", "startDate": "", "endDate": "", "bullets": [] } ],
+    "skills":       [ { "name": "", "level": "" } ],
+    "languages":    [ { "name": "", "level": "" } ],
+    "certificates": [ { "name": "" } ],
+    "references":   [ { "name": "", "title": "", "phone": "", "email": "" } ],
+    "interests":    [ { "value": "" } ],
+    "custom":       [ { "title": "", "bullets": [] } ]
+  }
+}
+Rules:
+- Only include information that actually appears in the text below. Use "" for a field that isn't present.
+- Never invent employers, dates, numbers, or achievements that aren't in the source text — do not embellish bullets beyond what's stated.
+- Set "current" to true only if the text explicitly marks a role/qualification as ongoing (e.g. "present", "current"); leave "endDate" empty in that case.
+- Bullets should closely reflect the original wording, cleaned up for grammar only.
+- Omit a section entirely (empty array) if there's nothing relevant in the text — don't invent placeholder items.
+
+Resume text:
+"""
+${text}
+"""`;
+}
+
+function importStr(v) { return (typeof v === 'string') ? v : (v == null ? '' : String(v)); }
+
+function coerceImportedItem(type, raw) {
+    const blank = BLANK[type] ? BLANK[type]() : { id: genId('x') };
+    const clean = { id: blank.id };
+    Object.keys(blank).forEach(k => {
+        if (k === 'id') return;
+        let v = (raw && raw[k] !== undefined) ? raw[k] : blank[k];
+        if (k === 'bullets')      v = Array.isArray(v) ? v.filter(b => typeof b === 'string' && b.trim()).slice(0, 8) : [];
+        else if (k === 'current') v = !!v;
+        else if (typeof blank[k] === 'string') v = importStr(v);
+        clean[k] = v;
+    });
+    return clean;
+}
+
+function finalizeImportedResume(parsed, truncated) {
+    const pd = (parsed && parsed.personalDetails) || {};
+    const newCvData = {
+        meta: { cvId: 'cv_' + Date.now().toString(36), templateId: 'modern-01', themeOverrides: {} },
+        personalDetails: {
+            fullName: importStr(pd.fullName), jobTitle: importStr(pd.jobTitle), email: importStr(pd.email),
+            phone: importStr(pd.phone), location: importStr(pd.location), photo: null, links: [],
+            summary: importStr(pd.summary)
+        },
+        sections: []
+    };
+
+    let order = 1;
+    const rawSections = (parsed && parsed.sections) || {};
+    IMPORT_SECTION_ORDER.forEach(type => {
+        const items = Array.isArray(rawSections[type]) ? rawSections[type].filter(Boolean) : [];
+        if (!items.length) return;
+        newCvData.sections.push({
+            type, title: IMPORT_SECTION_TITLES[type], visible: true, order: order++,
+            items: items.map(it => coerceImportedItem(type, it))
+        });
+    });
+
+    if (!newCvData.personalDetails.fullName && !newCvData.sections.length) {
+        const status = document.getElementById('import-status');
+        if (status) status.innerHTML = `<p class="ai-error">Couldn't confidently pull any details from that file. Try a cleaner export of your CV, or build from scratch instead.</p>`;
+        return;
+    }
+
+    allResumes[newCvData.meta.cvId] = newCvData;
+    saveAllResumes();
+    closeImportModal();
+    setCurrentResume(newCvData.meta.cvId);
+    showToast(truncated ? 'CV imported (long file — please review carefully)' : 'CV imported — review before downloading', 'success');
+}
+
 
 function exportPDF() {
     attemptDownload('cv', currentTemplateId);
@@ -2212,6 +2509,7 @@ window.addEventListener('resize', () => {
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchAllTemplates(); 
     loadData();
+    lastSavedAt = Date.now();
     if (!loadSharedResume()) {
         const initialView = hashToView(location.hash);
         history.replaceState({ view: initialView }, '', initialView === 'landing' ? '#' : '#' + initialView);
