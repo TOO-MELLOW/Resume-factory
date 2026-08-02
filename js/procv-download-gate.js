@@ -32,6 +32,7 @@
 
     if (session) {
       const paidResult = await tryPaidDownload(documentType, templateId, session.access_token);
+      alert('3b. paidResult: ' + JSON.stringify(paidResult));
       if (paidResult.allowed) {
         return renderAndDownload(documentType, templateId, { paid: true });
       }
