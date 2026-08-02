@@ -1812,7 +1812,7 @@ function stepPersonal(p) {
         return `<p style="font-size:11px;color:var(--t2);margin:0 0 6px">Words in the job description not found in your CV:</p><div style="display:flex;flex-wrap:wrap;gap:4px">${missing.map(w => `<span style="background:#FEF3C7;color:#92400E;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid #FDE68A">${w}</span>`).join("")}</div>`;
     }
 
-    // ---------- AI ----------
+    
 const AI_BACKEND_CONFIGURED = true;
 const AI_BACKEND_URL = "/api/ai-generate";
 
