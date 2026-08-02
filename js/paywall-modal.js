@@ -166,10 +166,14 @@
 
     try {
       const res = await fetch(`${window.MELLOW_SUPABASE_URL}/functions/v1/payment-initiate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ package: pwSelectedPackage }),
-      });
+      method: "POST",
+      headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session.access_token}`,
+    apikey: window.MELLOW_SUPABASE_ANON_KEY,   // new line
+  },
+  body: JSON.stringify({ package: pwSelectedPackage }),
+});
       const data = await res.json();
       if (!res.ok || !data.redirect_url) {
         throw new Error("status " + res.status + ": " + JSON.stringify(data));
