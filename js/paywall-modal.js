@@ -33,11 +33,46 @@
     btn.textContent = loading ? loadingLabel : defaultLabel;
   }
 
-  function pwOpenForDownload(documentType, templateId) {
+  async function pwOpenForDownload(documentType, templateId) {
     pwPendingDocType = documentType;
     pwPendingTemplateId = templateId;
-    pwGoToStep("gate");
     document.getElementById("pw-email").value = "";
+
+    let session = null;
+    try {
+      const { data } = await window.mellowSupabase.auth.getSession();
+      session = data.session;
+    } catch (e) {
+      console.error("getSession failed", e);
+    }
+
+    if (!session) {
+      pwGoToStep("gate");
+      window.showPaywall();
+      return;
+    }
+
+    const status = await checkSessionStatus(session.access_token);
+    if (window.updateGlobalCreditBadge) window.updateGlobalCreditBadge();
+    if (status && status.credits_remaining > 0) {
+      const n = status.credits_remaining;
+      document.getElementById("pw-credit-badge").textContent = `${n} ${n === 1 ? "credit" : "credits"} remaining`;
+      pwGoToStep("unlocked");
+    } else {
+      pwRenderPackages();
+      pwGoToStep("buy");
+    }
+    window.showPaywall();
+  }
+
+  // Fast path for when we already know the user is verified but out of
+  // credits (attemptDownload's paidResult.reason === "no_credits") — skip
+  // the gate/otp steps entirely and go straight to purchasing.
+  function pwOpenForBuy(documentType, templateId) {
+    pwPendingDocType = documentType;
+    pwPendingTemplateId = templateId;
+    pwRenderPackages();
+    pwGoToStep("buy");
     window.showPaywall();
   }
 
@@ -108,6 +143,7 @@
       const status = session ? await checkSessionStatus(session.access_token) : null;
       const n = status ? status.credits_remaining : "";
       document.getElementById("pw-credit-badge").textContent = `${n} ${n === 1 ? "credit" : "credits"} remaining`;
+      if (window.updateGlobalCreditBadge) window.updateGlobalCreditBadge();
       pwGoToStep("unlocked");
     } else {
       pwRenderPackages();
@@ -172,7 +208,10 @@
     Authorization: `Bearer ${session.access_token}`,
     apikey: window.MELLOW_SUPABASE_ANON_KEY,   // new line
   },
-  body: JSON.stringify({ package: pwSelectedPackage }),
+  body: JSON.stringify({
+    package: pwSelectedPackage,
+    return_url: window.location.origin + window.location.pathname + "?pw_return=1",
+  }),
 });
       const data = await res.json();
       if (!res.ok || !data.redirect_url) {
@@ -187,6 +226,7 @@
   }
 
   window.pwOpenForDownload = pwOpenForDownload;
+  window.pwOpenForBuy = pwOpenForBuy;
   window.pwGoToStep = pwGoToStep;
   window.pwHandleSendCode = pwHandleSendCode;
   window.pwHandleVerifyCode = pwHandleVerifyCode;
