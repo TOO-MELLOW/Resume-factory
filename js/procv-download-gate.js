@@ -99,12 +99,23 @@
     else console.error(msg);
   }
 
+  // The client refers to cover letters as "coverletter" everywhere
+  // internally (attemptDownload, renderAndDownload's dispatch, etc.), but
+  // the backend functions validate against "cover_letter" (with an
+  // underscore) and reject anything else with a 400. That mismatch meant
+  // every single cover letter download request was being rejected before
+  // it ever reached the credit-check logic — translate at the API boundary
+  // instead of touching every internal "coverletter" reference.
+  function toApiDocumentType(documentType) {
+    return documentType === "coverletter" ? "cover_letter" : documentType;
+  }
+
   async function tryPaidDownload(documentType, templateId, accessToken) {
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/download-paid`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`, apikey: SUPABASE_ANON_KEY },
-        body: JSON.stringify({ document_type: documentType, template_used: templateId }),
+        body: JSON.stringify({ document_type: toApiDocumentType(documentType), template_used: templateId }),
       });
       return await res.json();
     } catch (e) {
@@ -118,7 +129,7 @@
       const res = await fetch(`${SUPABASE_URL}/functions/v1/download-free`, {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
-        body: JSON.stringify({ document_type: documentType, template_used: templateId, device_id: getDeviceId() }),
+        body: JSON.stringify({ document_type: toApiDocumentType(documentType), template_used: templateId, device_id: getDeviceId() }),
       });
       return await res.json();
     } catch (e) {
