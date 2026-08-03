@@ -11,6 +11,34 @@
   window.MELLOW_SUPABASE_URL = SUPABASE_URL;
   window.MELLOW_SUPABASE_ANON_KEY = SUPABASE_ANON_KEY;
 
+  // Device id: a stable per-browser id sent alongside free-download checks so
+  // the backend can use it as a secondary signal next to IP (IP alone means
+  // shared networks look "already used" while VPN switching looks unlimited).
+  // NOTE: the download-free Edge Function must also be updated to read and
+  // store this field — this only prepares the frontend side of that fix.
+  const DEVICE_ID_KEY = "mellow_device_id";
+  function getCookie(name) {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function setCookie(name, value) {
+    document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${400 * 24 * 60 * 60}; path=/; SameSite=Lax`;
+  }
+  function getDeviceId() {
+    let id = null;
+    try { id = window.localStorage.getItem(DEVICE_ID_KEY); } catch (e) {}
+    if (!id) id = getCookie(DEVICE_ID_KEY);
+    if (!id) {
+      id = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : ('dev_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+    }
+    try { window.localStorage.setItem(DEVICE_ID_KEY, id); } catch (e) {}
+    setCookie(DEVICE_ID_KEY, id);
+    return id;
+  }
+  window.getMellowDeviceId = getDeviceId;
+
   async function attemptDownload(documentType, templateId) {
     if (typeof window.pwTrack === "function") {
       try { window.pwTrack("cv_download_attempted", { document_type: documentType, template_id: templateId }); }
@@ -30,13 +58,28 @@
     if (session) {
       const paidResult = await tryPaidDownload(documentType, templateId, session.access_token);
       if (paidResult.allowed) {
+        if (window.updateGlobalCreditBadge) window.updateGlobalCreditBadge();
         return renderAndDownload(documentType, templateId, { paid: true });
+      }
+      if (paidResult.reason === "no_credits") {
+        showToastSafe("You're out of credits — grab more to keep downloading", "info");
+        if (window.pwOpenForBuy) window.pwOpenForBuy(documentType, templateId);
+        else showPaywall();
+        return;
+      }
+      if (paidResult.reason === "error") {
+        showToastSafe("Something went wrong — please try again.", "error");
+        return;
       }
     }
 
     const freeResult = await tryFreeDownload(documentType, templateId);
     if (freeResult.allowed) {
       return renderAndDownload(documentType, templateId, { paid: false });
+    }
+    if (freeResult.reason === "error") {
+      showToastSafe("Something went wrong — please try again.", "error");
+      return;
     }
     if (window.pwOpenForDownload) {
       window.pwOpenForDownload(documentType, templateId);
@@ -54,7 +97,7 @@
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/download-paid`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`, apikey: SUPABASE_ANON_KEY },
         body: JSON.stringify({ document_type: documentType, template_used: templateId }),
       });
       return await res.json();
@@ -68,8 +111,8 @@
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/download-free`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ document_type: documentType, template_used: templateId }),
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
+        body: JSON.stringify({ document_type: documentType, template_used: templateId, device_id: getDeviceId() }),
       });
       return await res.json();
     } catch (e) {
@@ -82,7 +125,7 @@
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/session-status`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`, apikey: SUPABASE_ANON_KEY },
       });
       if (!res.ok) return null;
       return await res.json();
@@ -129,6 +172,7 @@
       posthog.identify(data.session.user.id);
     }
     const status = await checkSessionStatus(data.session.access_token);
+    if (window.updateGlobalCreditBadge) window.updateGlobalCreditBadge();
     if (status && status.credits_remaining > 0) {
       return { ok: true, unlocked: true };
     }
