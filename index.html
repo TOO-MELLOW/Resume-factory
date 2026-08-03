@@ -52,10 +52,12 @@
         }
         #view-landing, #view-gallery, #view-manager { display: none }
         #view-builder { display: none; flex-direction: column; height: 100vh; overflow: hidden }
+        #view-clbuilder { display: none; flex-direction: column; height: 100vh; overflow: hidden }
         [data-view=landing] #view-landing { display: block }
         [data-view=gallery] #view-gallery { display: block }
         [data-view=manager] #view-manager { display: block }
         [data-view=builder] #view-builder { display: flex }
+        [data-view=clbuilder] #view-clbuilder { display: flex }
     </style>
 </head>
 <body data-view="landing">
@@ -66,7 +68,7 @@
     <div class="quick-fab-menu" id="quick-fab-menu">
       <button class="qf-item" onclick="closeQuickFab();navigate('builder')">📄 Create CV</button>
       <button class="qf-item" onclick="closeQuickFab();openImportModal()">📥 Import CV</button>
-      <button class="qf-item qf-soon" disabled title="Coming soon">✉️ Cover Letter<span class="qf-badge">Soon</span></button>
+      <button class="qf-item" onclick="closeQuickFab();createNewCoverLetter()">✉️ Cover Letter</button>
     </div>
     <button class="quick-fab" id="quick-fab" onclick="toggleQuickFab()" aria-label="Quick actions">+</button>
   </div>
@@ -210,6 +212,15 @@
       <p style="color:var(--t2);">You have <span id="resume-count">0</span> saved resumes.</p>
     </div>
     <div class="manager-grid" id="manager-grid"></div>
+
+    <div style="max-width:1100px;margin:36px auto 8px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:24px">
+      <div>
+        <h2 style="font-family:var(--font-display);font-size:24px;margin:0 0 4px;">My Cover Letters</h2>
+        <p style="color:var(--t2);margin:0">You have <span id="cl-count">0</span> saved cover letters.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="createNewCoverLetter()">+ New Cover Letter</button>
+    </div>
+    <div class="manager-grid" id="cl-manager-grid"></div>
   </div>
 
 
@@ -225,6 +236,7 @@
         <button class="btn btn-outline btn-sm" id="ep-toggle-btn" onclick="toggleEditorPanel()" title="Toggle editor">◀ Editor</button>
         
         <button class="btn btn-outline btn-sm" onclick="toggleAtsPanel()">ATS Check</button>
+        <button class="btn btn-outline btn-sm" onclick="createNewCoverLetter(currentCvId)">✉️ Cover Letter</button>
         <button class="btn btn-primary btn-sm" onclick="exportPDF()">⬇ Download PDF</button>
         <button class="btn btn-outline btn-sm" onclick="shareResume()">🔗 Share</button>
         <button class="btn btn-outline btn-sm" onclick="toggleTips()">💡 Tips</button>
@@ -275,6 +287,26 @@
         <button class="preview-slide-close" onclick="closeMobilePreview()">✕</button>
       </div>
       <div class="preview-slide-body" id="preview-slide-body"></div>
+    </div>
+  </div>
+
+  <!-- COVER LETTER BUILDER VIEW -->
+  <div id="view-clbuilder">
+    <header class="bh">
+      <div class="bh-l">
+        <button class="bh-back" onclick="navigate('manager')">← Manager</button>
+        <div class="bh-logo">Mellow<em>CV FACTORY</em></div>
+      </div>
+      <div class="bh-r">
+        <div class="autosave"><div class="save-dot" id="cl-save-dot"></div><span id="cl-autosave-label">Auto-saved</span></div>
+        <button class="btn btn-primary btn-sm" onclick="exportCoverLetterPDF()">⬇ Download PDF</button>
+      </div>
+    </header>
+    <div class="cl-body-row">
+      <div class="cl-form-panel" id="cl-form-panel"></div>
+      <div class="cl-preview-panel">
+        <div class="cl-page" id="cl-preview-root"></div>
+      </div>
     </div>
   </div>
 
