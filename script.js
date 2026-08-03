@@ -1067,6 +1067,7 @@ function renderManager() {
                 <button class="btn btn-sm btn-outline" onclick="deleteResume('${id}')" style="color:#DC2626;">Delete</button>
             </div></div>`;
     }).join('');
+    renderCLManagerList();
 }
 function createNewResume() {
     const base = JSON.parse(document.getElementById('cv-data').textContent);
@@ -1079,7 +1080,224 @@ function duplicateResume(id) { const copy=JSON.parse(JSON.stringify(allResumes[i
 function renameResume(id)    { const n=prompt('Enter new name:',allResumes[id].personalDetails.fullName); if(n&&n.trim()){ allResumes[id].personalDetails.fullName=n.trim(); saveAllResumes(); renderManager(); if(currentCvId===id){cvData=allResumes[id];renderPreview();updatePaLabel();} showToast('Renamed','success'); } }
 function deleteResume(id)    { if(!confirm('Delete this resume?'))return; delete allResumes[id]; saveAllResumes(); renderManager(); if(currentCvId===id){const ids=Object.keys(allResumes); if(ids.length)setCurrentResume(ids[0]); else createNewResume();} showToast('Deleted','info'); }
 
-const NAV_VIEWS = ['landing', 'gallery', 'builder', 'manager'];
+// ---------- COVER LETTERS (separate top-level data model & storage — not squeezed into cvData) ----------
+let allCoverLetters = {};
+let currentClId = null;
+let clData = null;
+
+function loadAllCoverLetters() {
+    try {
+        const stored = localStorage.getItem('Mellow CV_all_coverletters');
+        allCoverLetters = stored ? JSON.parse(stored) : {};
+    } catch(e) { allCoverLetters = {}; }
+}
+function saveAllCoverLetters() { try { localStorage.setItem('Mellow CV_all_coverletters', JSON.stringify(allCoverLetters)); } catch(e) {} }
+
+function blankCoverLetter(sourceCvId) {
+    const src = sourceCvId && allResumes[sourceCvId];
+    const p = src ? src.personalDetails : null;
+    return {
+        meta: { clId: 'cl_' + Date.now().toString(36), templateId: 'cl-01', createdFrom: sourceCvId || null, label: '' },
+        sender: {
+            fullName: p ? p.fullName : '', email: p ? p.email : '',
+            phone: p ? p.phone : '', location: p ? p.location : ''
+        },
+        recipient: { hiringManager: '', company: '', companyAddress: '' },
+        letter: {
+            date: new Date().toLocaleDateString('en-ZA', { day:'numeric', month:'long', year:'numeric' }),
+            jobTitle: p ? p.jobTitle : '', greeting: 'Dear Hiring Manager,', body: '', closing: 'Sincerely,'
+        }
+    };
+}
+function clDisplayName(cl) {
+    return cl.meta.label || [cl.letter.jobTitle, cl.recipient.company].filter(Boolean).join(' — ') || 'Untitled Cover Letter';
+}
+
+function renderCLManagerList() {
+    const grid = document.getElementById('cl-manager-grid');
+    const count = document.getElementById('cl-count');
+    if (!grid) return;
+    const ids = Object.keys(allCoverLetters);
+    if (count) count.textContent = ids.length;
+    if (!ids.length) { grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--t3);">No cover letters yet.</p>'; return; }
+    grid.innerHTML = ids.map(id => {
+        const cl = allCoverLetters[id];
+        const tmplName = (CL_TEMPLATES.find(t=>t.id===cl.meta.templateId)||{}).name || cl.meta.templateId;
+        const isCurrent = (id===currentClId);
+        return `<div class="resume-card" style="${isCurrent?'border:2px solid var(--accent);':''}">
+            <div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:32px">✉️</div>
+            <div class="meta"><strong>${escHtml(clDisplayName(cl))}</strong><small>${escHtml(tmplName)}</small></div>
+            <div class="actions">
+                <button class="btn btn-sm btn-primary" onclick="setCurrentCoverLetter('${id}')">Open</button>
+                <button class="btn btn-sm btn-outline" onclick="duplicateCoverLetter('${id}')">Duplicate</button>
+                <button class="btn btn-sm btn-outline" onclick="renameCoverLetter('${id}')">Rename</button>
+                <button class="btn btn-sm btn-outline" onclick="deleteCoverLetter('${id}')" style="color:#DC2626;">Delete</button>
+            </div></div>`;
+    }).join('');
+}
+
+function createNewCoverLetter(sourceCvId) {
+    const cl = blankCoverLetter(sourceCvId || currentCvId);
+    allCoverLetters[cl.meta.clId] = cl;
+    saveAllCoverLetters();
+    renderCLManagerList();
+    setCurrentCoverLetter(cl.meta.clId);
+    showToast('New cover letter created', 'success');
+}
+function setCurrentCoverLetter(clId) {
+    if (!allCoverLetters[clId]) return;
+    currentClId = clId; clData = allCoverLetters[clId];
+    renderCLForm(); renderCoverLetterPreview(); autoSaveCoverLetter(); navigate('clbuilder');
+}
+function duplicateCoverLetter(id) {
+    const copy = JSON.parse(JSON.stringify(allCoverLetters[id]));
+    const newId = 'cl_' + Date.now().toString(36);
+    copy.meta.clId = newId;
+    allCoverLetters[newId] = copy; saveAllCoverLetters(); renderCLManagerList();
+    showToast('Duplicated', 'success');
+}
+function renameCoverLetter(id) {
+    const cl = allCoverLetters[id];
+    const n = prompt('Enter a label for this cover letter:', clDisplayName(cl));
+    if (n && n.trim()) {
+        cl.meta.label = n.trim(); saveAllCoverLetters(); renderCLManagerList();
+        showToast('Renamed', 'success');
+    }
+}
+function deleteCoverLetter(id) {
+    if (!confirm('Delete this cover letter?')) return;
+    delete allCoverLetters[id]; saveAllCoverLetters(); renderCLManagerList();
+    if (currentClId === id) { currentClId = null; clData = null; }
+    showToast('Deleted', 'info');
+}
+
+const CL_TEMPLATES = [
+    { id: 'cl-01', name: 'Classic' },
+    { id: 'cl-02', name: 'Modern' }
+];
+
+function renderCLForm() {
+    const panel = document.getElementById('cl-form-panel');
+    if (!panel || !clData) return;
+    const { sender, recipient, letter } = clData;
+    panel.innerHTML = `
+        <p class="ep-sh">Template</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+            ${CL_TEMPLATES.map(t => `<button class="btn btn-sm ${clData.meta.templateId===t.id?'btn-primary':'btn-outline'}" onclick="setCLTemplate('${t.id}')">${t.name}</button>`).join('')}
+        </div>
+
+        <p class="ep-sh">Your Details</p>
+        <div class="f"><label>Full Name</label><input value="${escHtml(sender.fullName)}" oninput="updateCL('sender','fullName',this.value)"></div>
+        <div class="f-row">
+            <div class="f"><label>Email</label><input type="email" value="${escHtml(sender.email)}" oninput="updateCL('sender','email',this.value)"></div>
+            <div class="f"><label>Phone</label><input type="tel" value="${escHtml(sender.phone)}" oninput="updateCL('sender','phone',this.value)"></div>
+        </div>
+        <div class="f"><label>Location</label><input value="${escHtml(sender.location)}" oninput="updateCL('sender','location',this.value)"></div>
+
+        <p class="ep-sh">Recipient</p>
+        <div class="f"><label>Hiring Manager (optional)</label><input value="${escHtml(recipient.hiringManager)}" oninput="updateCL('recipient','hiringManager',this.value)"></div>
+        <div class="f"><label>Company</label><input value="${escHtml(recipient.company)}" oninput="updateCL('recipient','company',this.value)"></div>
+        <div class="f"><label>Company Address (optional)</label><input value="${escHtml(recipient.companyAddress)}" oninput="updateCL('recipient','companyAddress',this.value)"></div>
+
+        <p class="ep-sh">The Letter</p>
+        <div class="f"><label>Position applying for</label><input value="${escHtml(letter.jobTitle)}" oninput="updateCL('letter','jobTitle',this.value)"></div>
+        <div class="f"><label>Date</label><input value="${escHtml(letter.date)}" oninput="updateCL('letter','date',this.value)"></div>
+        <div class="f"><label>Greeting</label><input value="${escHtml(letter.greeting)}" oninput="updateCL('letter','greeting',this.value)"></div>
+        <div class="f">
+            <div class="f-hd"><label>Letter Body</label><span class="word-count" id="cl-wc">0 words</span></div>
+            <textarea rows="12" id="cl-body-input" oninput="updateCL('letter','body',this.value);updateCLBodyWordCount(this)">${escHtml(letter.body)}</textarea>
+        </div>
+        <button class="btn-ai" onclick="aiDraftCoverLetter(this)">✨ AI Draft Letter</button>
+        <div class="ai-inline-panel" id="cl-ai-status"></div>
+        <div class="f"><label>Closing</label><input value="${escHtml(letter.closing)}" oninput="updateCL('letter','closing',this.value)"></div>
+    `;
+    updateCLBodyWordCount(document.getElementById('cl-body-input'));
+}
+
+function updateCLBodyWordCount(ta) {
+    if (!ta) return;
+    const wc = ta.value.trim().split(/\s+/).filter(Boolean).length;
+    const el = document.getElementById('cl-wc');
+    if (el) el.textContent = `${wc} words`;
+}
+
+function updateCL(section, key, val) {
+    if (!clData) return;
+    clData[section][key] = val;
+    renderCoverLetterPreview();
+    autoSaveCoverLetter();
+}
+function setCLTemplate(id) {
+    if (!clData) return;
+    clData.meta.templateId = id;
+    renderCLForm();
+    renderCoverLetterPreview();
+    autoSaveCoverLetter();
+}
+
+let lastSavedAtCL = null;
+function autoSaveCoverLetter() {
+    if (!clData || !currentClId) return;
+    allCoverLetters[currentClId] = clData;
+    saveAllCoverLetters();
+    lastSavedAtCL = Date.now();
+    updateAutosaveLabelCL();
+    const dot = document.getElementById('cl-save-dot');
+    if (dot) { dot.classList.add('saving'); setTimeout(()=>dot.classList.remove('saving'),600); }
+}
+function updateAutosaveLabelCL() {
+    const el = document.getElementById('cl-autosave-label');
+    if (!el) return;
+    if (!lastSavedAtCL) { el.textContent = 'Not saved yet'; return; }
+    const secs = Math.round((Date.now() - lastSavedAtCL) / 1000);
+    if (secs < 3) el.textContent = 'Saved just now';
+    else if (secs < 60) el.textContent = `Saved ${secs}s ago`;
+    else { const mins = Math.round(secs / 60); el.textContent = mins === 1 ? 'Saved 1 min ago' : `Saved ${mins} min ago`; }
+}
+setInterval(updateAutosaveLabelCL, 1000);
+
+function renderCoverLetterPreview() {
+    const root = document.getElementById('cl-preview-root');
+    if (!root || !clData) return;
+    root.innerHTML = renderCoverLetter(clData, clData.meta.templateId);
+}
+
+function renderCoverLetter(data, tid) {
+    const { sender, recipient, letter } = data;
+    const bodyHtml = (letter.body || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
+        .map(p => `<p>${escHtml(p)}</p>`).join('') || '<p class="empty-note">Start writing your letter…</p>';
+    const recipientHtml = `<div class="cl-recipient">
+        ${recipient.hiringManager ? `<p>${escHtml(recipient.hiringManager)}</p>` : ''}
+        ${recipient.company ? `<p>${escHtml(recipient.company)}</p>` : ''}
+        ${recipient.companyAddress ? `<p>${escHtml(recipient.companyAddress)}</p>` : ''}
+    </div>`;
+    const refLine = letter.jobTitle ? `<p class="cl-refline">Re: Application for ${escHtml(letter.jobTitle)}</p>` : '';
+
+    if (tid === 'cl-02') {
+        return `<div class="cl-modern-header">
+                <p class="cl-modern-name">${escHtml(sender.fullName)}</p>
+                <p class="cl-modern-meta">${[sender.email, sender.phone, sender.location].filter(Boolean).map(escHtml).join(' · ')}</p>
+            </div>
+            <p class="cl-date">${escHtml(letter.date)}</p>
+            ${recipientHtml}${refLine}
+            <p class="cl-greeting">${escHtml(letter.greeting)}</p>
+            <div class="cl-body">${bodyHtml}</div>
+            <p class="cl-closing">${escHtml(letter.closing)}</p>
+            <p class="cl-signoff-name" style="color:var(--color-accent-cl,#2F6F63)">${escHtml(sender.fullName)}</p>`;
+    }
+    return `<div class="cl-sender">
+            <p class="cl-sender-name">${escHtml(sender.fullName)}</p>
+            <p class="cl-sender-meta">${[sender.email, sender.phone, sender.location].filter(Boolean).map(escHtml).join(' · ')}</p>
+        </div>
+        <p class="cl-date">${escHtml(letter.date)}</p>
+        ${recipientHtml}${refLine}
+        <p class="cl-greeting">${escHtml(letter.greeting)}</p>
+        <div class="cl-body">${bodyHtml}</div>
+        <p class="cl-closing">${escHtml(letter.closing)}</p>
+        <p class="cl-signoff-name">${escHtml(sender.fullName)}</p>`;
+}
+
+const NAV_VIEWS = ['landing', 'gallery', 'builder', 'manager', 'clbuilder'];
 function hashToView(hash) {
     const v = (hash || '').replace(/^#/, '');
     return NAV_VIEWS.includes(v) ? v : 'landing';
@@ -1090,6 +1308,19 @@ function navigate(view, opts={}) {
     document.body.setAttribute('data-view', view);
     if (view==='manager') renderManager();
     if (view==='builder') { if(!cvData)loadData(); renderPreview(); setStep(currentStep); updatePaLabel(); }
+    if (view==='clbuilder') {
+        if (!clData) {
+            const ids = Object.keys(allCoverLetters);
+            if (ids.length) { currentClId = ids[0]; clData = allCoverLetters[currentClId]; }
+        }
+        if (clData) { renderCLForm(); renderCoverLetterPreview(); updateAutosaveLabelCL(); }
+        else {
+            const fp = document.getElementById('cl-form-panel');
+            const pr = document.getElementById('cl-preview-root');
+            if (fp) fp.innerHTML = '<p style="padding:20px;color:var(--t3)">No cover letter selected. <a onclick="navigate(\'manager\')" style="cursor:pointer;color:var(--accent)">Go to My Resumes</a> to create one.</p>';
+            if (pr) pr.innerHTML = '';
+        }
+    }
     if (view==='gallery') renderGallery();
     if (view==='landing') { renderHeroCv(); renderShowcaseStrip(); }
     window.scrollTo(0,0);
@@ -1974,11 +2205,12 @@ function customCard(it, i) {
 const AI_BACKEND_CONFIGURED = true;
 const AI_BACKEND_URL = "/api/ai-generate";
 
-async function callmellow(prompt, outputEl, onSuccess) {
+async function callmellow(prompt, outputEl, onSuccess, onError) {
     outputEl.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:#1B2A4A;color:#fff;padding:8px 12px;border-radius:6px"><span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></span> Thinking...</div>`;
 
     if (!AI_BACKEND_CONFIGURED) {
         outputEl.innerHTML = `<p style="color:#B45309;font-size:12px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:8px 10px">AI writing help isn't connected yet — this feature needs a backend set up first. Your CV editing, templates, and download all work normally without it.</p>`;
+        if (onError) onError();
         return;
     }
 
@@ -1992,10 +2224,52 @@ async function callmellow(prompt, outputEl, onSuccess) {
         const data = await resp.json();
         const text = data.response;
         if (text) onSuccess(text);
-        else outputEl.innerHTML = `<p style="color:#DC2626;font-size:12px">No response received. Please try again.</p>`;
+        else { outputEl.innerHTML = `<p style="color:#DC2626;font-size:12px">No response received. Please try again.</p>`; if (onError) onError(); }
     } catch (err) {
         outputEl.innerHTML = `<p style="color:#DC2626;font-size:12px">Error: ${err.message}</p>`;
+        if (onError) onError();
     }
+}
+
+function clSourceBackgroundSummary() {
+    const srcId = clData && clData.meta.createdFrom;
+    const src = srcId && allResumes[srcId];
+    if (!src) return '';
+    const p = src.personalDetails;
+    const exp = src.sections.find(s => s.type === 'experience');
+    const skillsSec = src.sections.find(s => s.type === 'skills');
+    const lines = [];
+    if (p.jobTitle) lines.push(`Target/current title: ${p.jobTitle}`);
+    if (p.summary) lines.push(`Summary: ${p.summary}`);
+    if (exp && exp.items[0]) lines.push(`Most recent role: ${exp.items[0].role} at ${exp.items[0].company}`);
+    if (skillsSec && skillsSec.items.length) lines.push(`Key skills: ${skillsSec.items.map(s => s.name).slice(0, 8).join(', ')}`);
+    return lines.join('\n').slice(0, 800);
+}
+
+function aiDraftCoverLetter(btnEl) {
+    if (!clData) return;
+    const panel = document.getElementById('cl-ai-status');
+    if (!panel) return;
+    panel.classList.add('open');
+    if (btnEl) btnEl.disabled = true;
+
+    const bg = clSourceBackgroundSummary();
+    const prompt = `Write a professional, concise cover letter BODY only (2-4 short paragraphs). Do NOT include a greeting line like "Dear..." and do NOT include a sign-off like "Sincerely," — just the paragraphs of the letter itself.
+Role applying for: "${clData.letter.jobTitle || 'this position'}"
+Company: "${clData.recipient.company || 'the company'}"
+${bg ? `Candidate background (use only these facts, do not invent anything beyond them):\n${bg}\n` : 'No candidate background was provided — keep it general and avoid inventing specific achievements or employers.\n'}
+Keep it genuine and specific, avoid generic clichés like "team player" or "hard worker" unless backed by the background given. Return plain text only — no markdown, no quotation marks around the whole thing.`;
+
+    callmellow(prompt, panel, (text) => {
+        clData.letter.body = text.trim();
+        const ta = document.getElementById('cl-body-input');
+        if (ta) { ta.value = clData.letter.body; updateCLBodyWordCount(ta); }
+        renderCoverLetterPreview();
+        autoSaveCoverLetter();
+        panel.innerHTML = ''; panel.classList.remove('open');
+        if (btnEl) btnEl.disabled = false;
+        showToast('Draft generated — review and personalize it', 'success');
+    }, () => { if (btnEl) btnEl.disabled = false; });
 }
 
     function aiImproveSummaryInline(btnEl) {
@@ -2447,6 +2721,128 @@ async function exportPDFDirect() {
     }
 }
 
+function exportCoverLetterPDF() {
+    if (!clData) { showToast('No cover letter to export', 'error'); return; }
+    attemptDownload('coverletter', clData.meta.templateId);
+}
+
+async function exportCoverLetterPDFDirect() {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) { showToast('PDF library not loaded', 'error'); return; }
+    if (!clData) { showToast('No cover letter to export', 'error'); return; }
+
+    const toast = showToast('<span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle"></span> Generating PDF…', 'loading');
+
+    const A4_W = 794, A4_H = 1123;
+    const clone = document.createElement('div');
+    clone.className = 'cl-page';
+    clone.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: ${A4_W}px;
+        min-height: ${A4_H}px;
+        box-sizing: border-box;
+        box-shadow: none;
+        overflow: visible;
+    `;
+    clone.innerHTML = renderCoverLetter(clData, clData.meta.templateId);
+
+    document.body.appendChild(clone);
+
+    try {
+        if (document.fonts && document.fonts.ready) {
+            await Promise.race([
+                document.fonts.ready,
+                new Promise(r => setTimeout(r, 2000))
+            ]);
+        }
+    } catch (e) {
+        await new Promise(r => setTimeout(r, 150));
+    }
+
+    const paperColor = '#FFFFFF';
+
+    try {
+        const canvas = await html2canvas(clone, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: paperColor,
+            width: A4_W,
+            height: Math.max(clone.scrollHeight, A4_H),
+            windowWidth: A4_W,
+            logging: false
+        });
+
+        document.body.removeChild(clone);
+
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const mmPerPx = pageW / imgW;
+        const totalMM = imgH * mmPerPx;
+        const pxPerPage = Math.round(pageH / mmPerPx);
+
+        if (totalMM <= pageH + 2) {
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
+        } else {
+            let paddedPages = Math.ceil(imgH / pxPerPage);
+            const spill = imgH % pxPerPage;
+            const MIN_MEANINGFUL_SPILL = pxPerPage * 0.08;
+
+            if (spill > 0 && spill < MIN_MEANINGFUL_SPILL && paddedPages > 1) {
+                paddedPages -= 1;
+            }
+            const paddedH = paddedPages * pxPerPage;
+
+            let sourceCanvas = canvas;
+            if (paddedH > imgH) {
+                const padded = document.createElement('canvas');
+                padded.width = imgW;
+                padded.height = paddedH;
+                const pctx = padded.getContext('2d');
+                pctx.fillStyle = paperColor;
+                pctx.fillRect(0, 0, imgW, paddedH);
+                pctx.drawImage(canvas, 0, 0);
+                pctx.drawImage(canvas, 0, imgH - 1, imgW, 1, 0, imgH, imgW, paddedH - imgH);
+                sourceCanvas = padded;
+            }
+
+            let yOffset = 0;
+            while (yOffset < paddedH) {
+                const sliceH = Math.min(paddedH - yOffset, pxPerPage);
+                const sliceCanvas = document.createElement('canvas');
+                sliceCanvas.width = imgW;
+                sliceCanvas.height = sliceH;
+                const sctx = sliceCanvas.getContext('2d');
+                sctx.fillStyle = paperColor;
+                sctx.fillRect(0, 0, imgW, sliceH);
+                sctx.drawImage(sourceCanvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+                const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+                if (yOffset > 0) pdf.addPage();
+                pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
+                yOffset += sliceH;
+            }
+        }
+
+        const name = (clData.sender.fullName || 'Cover_Letter').replace(/\s+/g, '_');
+        pdf.save(`${name}_Cover_Letter.pdf`);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+        showToast('PDF downloaded!', 'success');
+
+    } catch (err) {
+        if (document.body.contains(clone)) document.body.removeChild(clone);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+        showToast('PDF failed: ' + err.message, 'error');
+    }
+}
+
 function shareResume() { }
 function loadSharedResume() { }
 
@@ -2509,6 +2905,7 @@ window.addEventListener('resize', () => {
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchAllTemplates(); 
     loadData();
+    loadAllCoverLetters();
     lastSavedAt = Date.now();
     if (!loadSharedResume()) {
         const initialView = hashToView(location.hash);
@@ -2520,3 +2917,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.exportPDFDirect = exportPDFDirect;
+window.exportCoverLetterPDFDirect = exportCoverLetterPDFDirect;
