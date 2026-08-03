@@ -34,6 +34,20 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // ----- FIX 1: Truncate the prompt if it's too massive -----
+    // Groq's context window is ~8k tokens. If the input is huge, 
+    // the AI runs out of room to output the full JSON.
+    let processedPrompt = prompt;
+    const MAX_PROMPT_CHARS = 14000; // Roughly 3500 tokens (safe for 8k context)
+    
+    if (processedPrompt.length > MAX_PROMPT_CHARS) {
+        // Truncate gracefully. Assumes the raw CV text is at the end of the prompt.
+        // If you just send the raw text as the prompt, this cuts it directly.
+        processedPrompt = processedPrompt.substring(0, MAX_PROMPT_CHARS) + 
+                          "\n\n[CV text truncated due to length. Focus on the most recent roles.]";
+    }
+
+    // ----- FIX 2: The actual API call (with WAY more output room) -----
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -41,23 +55,22 @@ module.exports = async (req, res) => {
         Authorization: `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b", // current recommended production model on Groq
+        model: "openai/gpt-oss-120b", // Keep your existing model
         messages: [
           {
             role: "system",
-            content:
-              "You are a concise, professional resume-writing assistant. Follow the user's formatting instructions exactly and never add commentary outside what was asked for."
+            content: "You are a precise JSON generator. Extract the exact data asked for. Return ONLY valid JSON. Do not wrap it in markdown code blocks. Keep bullet points short. If the text is too long, summarize the last 5 years only."
           },
-          { role: "user", content: prompt }
+          { role: "user", content: processedPrompt } // <-- Use the truncated prompt
         ],
         temperature: 0.6,
-        // JSON-mode requests (AI Improve) need room for a rewrite of every
-        // bullet in the section, plain-text tips don't. 600 was only enough
-        // for a single-item response and silently broke multi-bullet JSON.
-        max_tokens: json ? 2000 : 600
+        // ----- THE FIX: Increased max_tokens drastically for JSON -----
+        // 6000 tokens is enough for a 3-page CV full of bullet points.
+        // 800 tokens is plenty for a simple text tip.
+        max_tokens: json ? 6000 : 800
       })
     });
-
+    
     if (!groqRes.ok) {
       const errBody = await groqRes.text();
       console.error("Groq API error:", groqRes.status, errBody);
