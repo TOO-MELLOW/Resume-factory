@@ -1208,6 +1208,7 @@ function renderCLForm() {
             <textarea rows="12" id="cl-body-input" oninput="updateCL('letter','body',this.value);updateCLBodyWordCount(this)">${escHtml(letter.body)}</textarea>
         </div>
         <button class="btn-ai" onclick="aiDraftCoverLetter(this)">✨ AI Draft Letter</button>
+        <p class="ai-tip">AI drafts aren't perfectly polished — regenerate or tweak if needed</p>
         <div class="ai-inline-panel" id="cl-ai-status"></div>
         <div class="f"><label>Closing</label><input value="${escHtml(letter.closing)}" oninput="updateCL('letter','closing',this.value)"></div>
     `;
@@ -1706,7 +1707,11 @@ ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your expe
     <div class="icard" draggable="true" data-type="experience" data-idx="${i}">
         <div class="icard-top">
             <span class="icard-lbl">${escHtml(it.role || "New Role")}</span>
-            <button class="btn-del" onclick="delItem('experience',${i})">Delete</button>
+            <div class="icard-ctrls">
+                <button class="btn-ico" onclick="moveItem('experience',${i},-1)" title="Move up">↑</button>
+                <button class="btn-ico" onclick="moveItem('experience',${i},1)" title="Move down">↓</button>
+                <button class="btn-del" onclick="delItem('experience',${i})">Delete</button>
+            </div>
         </div>
         <div class="f"><label>Job Title</label><input value="${escHtml(it.role)}" oninput="updateItem('experience',${i},'role',this.value)"></div>
         <div class="f-row">
@@ -1734,7 +1739,11 @@ ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your expe
         <div class="icard" draggable="true" data-type="education" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.qualification || "New Qualification")}</span>
-                <button class="btn-del" onclick="delItem('education',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('education',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('education',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('education',${i})">Delete</button>
+                </div>
             </div>
             <div class="f"><label>Qualification</label><input value="${escHtml(it.qualification)}" oninput="updateItem('education',${i},'qualification',this.value)"></div>
             <div class="f-row">
@@ -1755,7 +1764,11 @@ ${wc < 30 ? `<div class="weak-hint">💡 Aim for 40-80 words. Describe your expe
     <div class="icard" draggable="true" data-type="projects" data-idx="${i}">
         <div class="icard-top">
             <span class="icard-lbl">${escHtml(it.name || "New Project")}</span>
-            <button class="btn-del" onclick="delItem('projects',${i})">Delete</button>
+            <div class="icard-ctrls">
+                <button class="btn-ico" onclick="moveItem('projects',${i},-1)" title="Move up">↑</button>
+                <button class="btn-ico" onclick="moveItem('projects',${i},1)" title="Move down">↓</button>
+                <button class="btn-del" onclick="delItem('projects',${i})">Delete</button>
+            </div>
         </div>
         <div class="f"><label>Project Name</label><input value="${escHtml(it.name)}" oninput="updateItem('projects',${i},'name',this.value)"></div>
         <div class="f"><label>URL (optional)</label><input value="${escHtml(it.url)}" oninput="updateItem('projects',${i},'url',this.value)" placeholder="https://"></div>
@@ -1778,7 +1791,11 @@ function customCard(it, i) {
     <div class="icard" draggable="true" data-type="custom" data-idx="${i}">
         <div class="icard-top">
             <span class="icard-lbl">${escHtml(it.title || "Activity")}</span>
-            <button class="btn-del" onclick="delItem('custom',${i})">Delete</button>
+            <div class="icard-ctrls">
+                <button class="btn-ico" onclick="moveItem('custom',${i},-1)" title="Move up">↑</button>
+                <button class="btn-ico" onclick="moveItem('custom',${i},1)" title="Move down">↓</button>
+                <button class="btn-del" onclick="delItem('custom',${i})">Delete</button>
+            </div>
         </div>
         <div class="f"><label>Title</label><input value="${escHtml(it.title)}" oninput="updateItem('custom',${i},'title',this.value)"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
@@ -1796,7 +1813,11 @@ function customCard(it, i) {
         <div class="icard" draggable="true" data-type="skills" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.name || "Skill")}</span>
-                <button class="btn-del" onclick="delItem('skills',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('skills',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('skills',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('skills',${i})">Delete</button>
+                </div>
             </div>
             <div class="f-row">
                 <div class="f"><label>Skill</label><input value="${escHtml(it.name)}" oninput="updateItem('skills',${i},'name',this.value)"></div>
@@ -1814,7 +1835,11 @@ function customCard(it, i) {
         <div class="icard" draggable="true" data-type="languages" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.name || "Language")}</span>
-                <button class="btn-del" onclick="delItem('languages',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('languages',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('languages',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('languages',${i})">Delete</button>
+                </div>
             </div>
             <div class="f-row">
                 <div class="f"><label>Language</label><input value="${escHtml(it.name)}" oninput="updateItem('languages',${i},'name',this.value)"></div>
@@ -1832,7 +1857,11 @@ function customCard(it, i) {
         <div class="icard" draggable="true" data-type="certificates" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.name || "Certificate")}</span>
-                <button class="btn-del" onclick="delItem('certificates',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('certificates',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('certificates',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('certificates',${i})">Delete</button>
+                </div>
             </div>
             <div class="f"><label>Certificate / Credential</label><input value="${escHtml(it.name)}" oninput="updateItem('certificates',${i},'name',this.value)"></div>
         </div>`;
@@ -1843,7 +1872,11 @@ function customCard(it, i) {
         <div class="icard" draggable="true" data-type="references" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.name || "Reference")}</span>
-                <button class="btn-del" onclick="delItem('references',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('references',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('references',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('references',${i})">Delete</button>
+                </div>
             </div>
             <div class="f"><label>Name</label><input value="${escHtml(it.name)}" oninput="updateItem('references',${i},'name',this.value)"></div>
             <div class="f"><label>Title / Company</label><input value="${escHtml(it.title)}" oninput="updateItem('references',${i},'title',this.value)"></div>
@@ -1870,7 +1903,11 @@ function customCard(it, i) {
         <div class="icard" draggable="true" data-type="strengths" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.value || "Strength")}</span>
-                <button class="btn-del" onclick="delItem('strengths',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('strengths',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('strengths',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('strengths',${i})">Delete</button>
+                </div>
             </div>
             <div class="f"><input value="${escHtml(it.value)}" oninput="updateItem('strengths',${i},'value',this.value)" placeholder="e.g. Reliable"></div>
         </div>`;
@@ -1881,7 +1918,11 @@ function customCard(it, i) {
         <div class="icard" draggable="true" data-type="personal-info" data-idx="${i}">
             <div class="icard-top">
                 <span class="icard-lbl">${escHtml(it.label || "Detail")}</span>
-                <button class="btn-del" onclick="delItem('personal-info',${i})">Delete</button>
+                <div class="icard-ctrls">
+                    <button class="btn-ico" onclick="moveItem('personal-info',${i},-1)" title="Move up">↑</button>
+                    <button class="btn-ico" onclick="moveItem('personal-info',${i},1)" title="Move down">↓</button>
+                    <button class="btn-del" onclick="delItem('personal-info',${i})">Delete</button>
+                </div>
             </div>
             <div class="f-row">
                 <div class="f"><label>Label</label><input value="${escHtml(it.label)}" oninput="updateItem('personal-info',${i},'label',this.value)" placeholder="e.g. Date of Birth"></div>
@@ -2049,6 +2090,12 @@ function customCard(it, i) {
         const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
         const [moved] = sec.items.splice(fromIdx, 1); sec.items.splice(toIdx, 0, moved);
         renderPreview(); setStep(currentStep); autoSave();
+    }
+    function moveItem(type, i, dir) {
+        const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
+        const target = i + dir;
+        if (target < 0 || target >= sec.items.length) return;
+        reorderItem(type, i, target);
     }
     function toggleSecVis(type) {
         const sec = cvData.sections.find(s => s.type === type); if (!sec) return;
@@ -2901,6 +2948,72 @@ window.addEventListener('resize', () => {
     }, 120);
 });
 
+// ---------- CREDIT BADGE + PAYMENT RETURN ----------
+async function updateGlobalCreditBadge() {
+    const badges = document.querySelectorAll('.credit-badge');
+    if (!badges.length || !window.mellowSupabase) return;
+    let session = null;
+    try {
+        const { data } = await window.mellowSupabase.auth.getSession();
+        session = data.session;
+    } catch (e) { return; }
+    if (!session) { badges.forEach(b => { b.style.display = 'none'; }); return; }
+    const status = window.checkSessionStatus ? await window.checkSessionStatus(session.access_token) : null;
+    if (!status || typeof status.credits_remaining !== 'number') { badges.forEach(b => { b.style.display = 'none'; }); return; }
+    const n = status.credits_remaining;
+    badges.forEach(b => {
+        b.style.display = 'inline-flex';
+        b.textContent = `${n} ${n === 1 ? 'credit' : 'credits'}`;
+    });
+}
+window.updateGlobalCreditBadge = updateGlobalCreditBadge;
+
+async function handlePaymentReturn() {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('pw_return')) return;
+    // Strip the query params immediately so a refresh doesn't re-trigger this.
+    history.replaceState({}, '', location.pathname + location.hash);
+
+    if (!window.mellowSupabase) return;
+    let session = null;
+    try {
+        const { data } = await window.mellowSupabase.auth.getSession();
+        session = data.session;
+    } catch (e) { return; }
+    if (!session || !window.checkSessionStatus) return;
+
+    const finish = (status) => {
+        const n = status.credits_remaining;
+        showToast(`CV download unlocked — you now have ${n} ${n === 1 ? 'credit' : 'credits'}`, 'success');
+        const creditBadgeEl = document.getElementById('pw-credit-badge');
+        if (creditBadgeEl) creditBadgeEl.textContent = `${n} ${n === 1 ? 'credit' : 'credits'} remaining`;
+        if (window.pwGoToStep) window.pwGoToStep('unlocked');
+        if (window.showPaywall) window.showPaywall();
+        updateGlobalCreditBadge();
+    };
+
+    let status = await window.checkSessionStatus(session.access_token);
+    if (status && status.credits_remaining > 0) { finish(status); return; }
+
+    // PayFast's ITN webhook can lag a second or two behind the browser
+    // redirect, so poll a few times before giving up.
+    const confirmToast = showToast('Confirming your payment…', 'loading');
+    let confirmed = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
+        status = await window.checkSessionStatus(session.access_token);
+        if (status && status.credits_remaining > 0) { confirmed = true; break; }
+    }
+    confirmToast.classList.remove('show');
+    setTimeout(() => confirmToast.remove(), 300);
+
+    if (confirmed) {
+        finish(status);
+    } else {
+        showToast("We're still confirming your payment — refresh in a moment if your credits don't appear.", 'info');
+    }
+}
+
 // ---------- INIT ----------
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchAllTemplates(); 
@@ -2914,6 +3027,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     renderHeroCv();
     renderShowcaseStrip();
+    updateGlobalCreditBadge();
+    handlePaymentReturn();
 });
 
 window.exportPDFDirect = exportPDFDirect;
