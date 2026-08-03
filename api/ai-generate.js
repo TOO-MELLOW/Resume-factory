@@ -59,7 +59,9 @@ module.exports = async (req, res) => {
         messages: [
           {
             role: "system",
-            content: "You are a precise JSON generator. Extract the exact data asked for. Return ONLY valid JSON. Do not wrap it in markdown code blocks. Keep bullet points short. If the text is too long, summarize the last 5 years only."
+            content: json
+              ? "You are a precise JSON generator. Extract the exact data asked for. Return ONLY valid JSON. Do not wrap it in markdown code blocks. Keep bullet points short. If the text is too long, summarize the last 5 years only."
+              : "You are a skilled, concise writer. Return plain prose only — no markdown formatting, no wrapping quotation marks, no code fences, and no preamble like \"Here is your draft:\". Output only the requested text itself."
           },
           { role: "user", content: processedPrompt } // <-- Use the truncated prompt
         ],
@@ -87,10 +89,28 @@ module.exports = async (req, res) => {
 
     const data = await groqRes.json();
     const choice = data?.choices?.[0];
-    const text = choice?.message?.content?.trim();
+    let text = choice?.message?.content?.trim();
 
     if (!text) {
       return res.status(502).json({ error: "Empty response from AI provider" });
+    }
+
+    // For plain-text (non-JSON) responses, clean up common model artifacts:
+    // a whole-string wrapping quote, stray leading markdown bold/heading
+    // markers, code fences, and a "Here's a draft:" style preamble line.
+    if (!json) {
+      text = text.replace(/^```[a-z]*\s*/i, "").replace(/```\s*$/, "").trim();
+      if (
+        (text.startsWith('"') && text.endsWith('"')) ||
+        (text.startsWith("'") && text.endsWith("'"))
+      ) {
+        text = text.slice(1, -1).trim();
+      }
+      text = text.replace(/^[*#\s]+/, "");
+      const lines = text.split("\n");
+      if (lines.length > 1 && /^(here('s| is)|sure[,!]?|certainly)\b.{0,60}:?\s*$/i.test(lines[0].trim())) {
+        text = lines.slice(1).join("\n").trim();
+      }
     }
 
     // finish_reason "length" means the response was cut off by max_tokens —
