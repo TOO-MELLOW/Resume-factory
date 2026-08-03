@@ -67,10 +67,16 @@
         else showPaywall();
         return;
       }
-      if (paidResult.reason === "error") {
-        showToastSafe("Something went wrong — please try again.", "error");
-        return;
-      }
+      // Any other outcome — including a server-side error response like
+      // {error:"internal_error"} that has neither `allowed` nor a
+      // recognized `reason` — used to fall straight through to the
+      // free-download path below. For a logged-in, paid user that's always
+      // wrong: the free download then fails too (already used), which
+      // reopens the paid "unlocked" screen and loops forever. Treat any
+      // unrecognized paid result as a hard error instead.
+      console.error("paid download not allowed", paidResult);
+      showToastSafe("Something went wrong — please try again.", "error");
+      return;
     }
 
     const freeResult = await tryFreeDownload(documentType, templateId);
