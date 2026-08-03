@@ -138,6 +138,8 @@
   async function renderAndDownload(documentType, templateId, meta) {
     if (documentType === "cv") {
       await window.exportPDFDirect();
+    } else if (documentType === "coverletter") {
+      await window.exportCoverLetterPDFDirect();
     }
   }
 
