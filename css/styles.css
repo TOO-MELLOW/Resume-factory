@@ -187,6 +187,7 @@
         .f-check label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--t1); margin-bottom: 0; cursor: pointer }
         .f-check input[type="checkbox"] { width: auto; appearance: auto; -webkit-appearance: auto; padding: 0; margin: 0; flex-shrink: 0 }
         .weak-hint { font-size: 11px; line-height: 1.4; color: #9A5B12; background: #FFF6E5; border: 1px solid #F0D9A8; border-radius: var(--r4); padding: 6px 8px; margin-top: 4px }
+        .ai-tip { font-size: 11px; line-height: 1.4; color: var(--t3); margin: 6px 0 0 }
         .bullet-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px }
         .bullet-row { display: flex; align-items: center; gap: 6px; padding: 2px 0 }
         .bullet-dot { color: var(--t3); font-size: 13px; flex-shrink: 0 }
@@ -200,6 +201,7 @@
         .bullet-row.dragging { opacity: 0.5 }
         .bullet-row.drag-over { background: var(--accent-bg); border-radius: var(--r4) }
         .icard-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 4px }
+        .icard-ctrls { display: flex; align-items: center; gap: 4px }
         .icard-lbl { font-size: 12px; font-weight: 600; color: var(--t2) }
         .btn-del { font-size: 11px; padding: 2px 8px; border-radius: var(--r4); border: 1px solid #FCA5A5; background: #FEF2F2; color: #DC2626; cursor: pointer; font-family: inherit; min-height: 28px }
         .btn-del:hover { background: #FEE2E2 }
