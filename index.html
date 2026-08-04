@@ -234,11 +234,6 @@
         <span class="credit-badge" id="header-credit-badge-cv"></span>
         <div class="autosave"><div class="save-dot" id="save-dot"></div><span id="autosave-label">Auto-saved</span></div>
         
-        <button class="btn btn-outline btn-sm" id="ep-toggle-btn" onclick="toggleEditorPanel()" title="Toggle editor">◀ Editor</button>
-        
-        <button class="btn btn-outline btn-sm" onclick="toggleAtsPanel()">ATS Check</button>
-        <button class="btn btn-outline btn-sm" onclick="createNewCoverLetter(currentCvId)">✉️ Cover Letter</button>
-        <button class="btn btn-primary btn-sm" onclick="exportPDF()">⬇ Download PDF</button>
         <button class="btn btn-outline btn-sm" onclick="shareResume()">🔗 Share</button>
         <button class="btn btn-outline btn-sm" onclick="toggleTips()">💡 Tips</button>
       </div>
@@ -281,7 +276,16 @@
         <span class="sb-dot" id="sb-ready-dot"></span><span id="sb-ready-txt">Checking…</span>
       </div>
     </div>
-    <button class="preview-fab" id="preview-fab" onclick="toggleMobilePreview()" aria-label="Toggle CV preview">👁</button>
+    <div class="bh-fab-wrap" id="bh-fab-wrap">
+      <div class="bh-fab-menu" id="bh-fab-menu">
+        <button class="bh-fab-item" onclick="bhFabAction('preview')">👁 <span>Preview</span></button>
+        <button class="bh-fab-item" onclick="bhFabAction('editor')"><span id="bh-fab-editor-txt">◀ Hide Editor</span></button>
+        <button class="bh-fab-item" onclick="bhFabAction('ats')">📊 <span>ATS Check</span></button>
+        <button class="bh-fab-item" onclick="bhFabAction('cover')">✉️ <span>Cover Letter</span></button>
+        <button class="bh-fab-item bh-fab-item-primary" onclick="bhFabAction('download')">⬇ <span>Download PDF</span></button>
+      </div>
+      <button class="bh-fab" id="bh-fab-btn" onclick="toggleBhFabMenu()" aria-haspopup="true" aria-expanded="false" aria-label="Open preview, download and CV tools menu">👁</button>
+    </div>
     <div class="preview-slide-overlay" id="preview-slide-overlay">
       <div class="preview-slide-header">
         <span class="preview-slide-title">📄 CV Preview</span>
