@@ -1496,7 +1496,7 @@ function renderMobilePreview() {
     if(ov.paperColor) el.style.setProperty('--color-paper',ov.paperColor); else el.style.removeProperty('--color-paper');
     el.style.setProperty('--scale',ov.fontSizeScale||1);
     el.style.setProperty('--spacing',ov.spacingScale||1);
-    el.innerHTML = renderTemplate(currentTemplateId, cvData);
+    el.innerHTML = renderTemplateContent(cvData, currentTemplateId);
     body.innerHTML='';
     body.appendChild(el);
     requestAnimationFrame(scaleMobilePreviewToFit);
