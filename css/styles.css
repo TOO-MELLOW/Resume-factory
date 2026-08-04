@@ -615,6 +615,15 @@
         .tip-list li::before { content: "•"; position: absolute; left: 4px; color: var(--accent) }
 
         .preview-fab { position: fixed; bottom: 52px; right: 20px; z-index: 60; background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; font-size: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); cursor: pointer; display: none; align-items: center; justify-content: center; transition: transform 0.2s, background 0.2s; touch-action: manipulation }
+        .bh-fab-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 10px }
+        .bh-fab { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 56px; height: 56px; font-size: 24px; line-height: 1; box-shadow: 0 4px 16px rgba(0,0,0,0.25); cursor: pointer; transition: transform .2s, background .2s; touch-action: manipulation }
+        .bh-fab:active { transform: scale(0.92) }
+        .bh-fab-wrap.open .bh-fab { background: var(--brand) }
+        .bh-fab-menu { display: none; flex-direction: column; gap: 4px; background: #fff; border: 1px solid var(--border); border-radius: var(--r12); box-shadow: var(--sh-lg); padding: 8px; min-width: 190px }
+        .bh-fab-wrap.open .bh-fab-menu { display: flex }
+        .bh-fab-item { display: flex; align-items: center; gap: 8px; background: none; border: none; text-align: left; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--t1); padding: 9px 10px; border-radius: var(--r8); cursor: pointer; white-space: nowrap }
+        .bh-fab-item:hover { background: var(--surface-2) }
+        .bh-fab-item-primary { color: var(--accent) }
         .editor-statusbar { display: flex; align-items: stretch; flex-shrink: 0; background: #fff; border-top: 1px solid var(--border); height: 32px; padding: 0 6px; gap: 4px; overflow-x: auto; scrollbar-width: none }
         .editor-statusbar::-webkit-scrollbar { display: none }
         .sb-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--t2); background: none; border: none; font-family: inherit; padding: 0 8px; white-space: nowrap; cursor: default }
@@ -706,7 +715,7 @@
 @media print {
     body > * { display: none !important }
     #view-builder { display: flex !important }
-    .bh, .ep, .ats-p, .pa-tb, .preview-fab, .preview-slide-overlay { display: none !important }
+    .bh, .ep, .ats-p, .pa-tb, .preview-fab, .bh-fab-wrap, .preview-slide-overlay { display: none !important }
     .bb { height: auto; overflow: visible }
     .pa { padding: 0; overflow: visible; background: #fff; display: flex !important }
 
@@ -744,7 +753,7 @@
 @media print {
     body > * { display: none !important }
     #view-builder { display: flex !important; height: auto !important; overflow: visible !important }
-    .bh, .ep, .ats-p, .pa-tb, .preview-fab, .preview-slide-overlay { display: none !important }
+    .bh, .ep, .ats-p, .pa-tb, .preview-fab, .bh-fab-wrap, .preview-slide-overlay { display: none !important }
     .bb { height: auto !important; overflow: visible !important; flex-direction: row }
     .pa { padding: 0; overflow: visible; background: #fff; display: flex !important }
     .preview-wrapper { padding: 0 !important; margin: 0 !important; width: 210mm !important; display: block !important }
