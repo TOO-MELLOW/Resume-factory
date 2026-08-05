@@ -1478,13 +1478,11 @@ function toggleMobilePreview() { isMobilePreviewOpen ? closeMobilePreview() : op
 function openMobilePreview() {
     isMobilePreviewOpen=true;
     document.getElementById('preview-slide-overlay').classList.add('open');
-    const fab=document.getElementById('preview-fab'); fab.classList.add('active'); fab.textContent='✕';
     renderMobilePreview();
 }
 function closeMobilePreview() {
     isMobilePreviewOpen=false;
     document.getElementById('preview-slide-overlay').classList.remove('open');
-    const fab=document.getElementById('preview-fab'); if(fab){fab.classList.remove('active');fab.textContent='👁';}
 }
 function renderMobilePreview() {
     const body=document.getElementById('preview-slide-body');
@@ -1496,7 +1494,7 @@ function renderMobilePreview() {
     if(ov.paperColor) el.style.setProperty('--color-paper',ov.paperColor); else el.style.removeProperty('--color-paper');
     el.style.setProperty('--scale',ov.fontSizeScale||1);
     el.style.setProperty('--spacing',ov.spacingScale||1);
-    el.innerHTML = renderTemplateContent(cvData, currentTemplateId);
+    el.innerHTML = renderTemplate(currentTemplateId, cvData);
     body.innerHTML='';
     body.appendChild(el);
     requestAnimationFrame(scaleMobilePreviewToFit);
@@ -2155,10 +2153,35 @@ function customCard(it, i) {
     function toggleEditorPanel() {
     editorPanelOpen = !editorPanelOpen;
     const ep = document.getElementById('editor-panel');
-    const btn = document.getElementById('ep-toggle-btn');
+    const lbl = document.getElementById('bh-fab-editor-txt');
     ep.style.display = editorPanelOpen ? '' : 'none';
-    if (btn) btn.textContent = editorPanelOpen ? '◀ Editor' : '▶ Editor';
+    if (lbl) lbl.textContent = editorPanelOpen ? '◀ Hide Editor' : '▶ Show Editor';
     requestAnimationFrame(scalePreviewToFit);
+}
+    function toggleBhFabMenu() {
+    const w = document.getElementById('bh-fab-wrap');
+    if (!w) return;
+    const open = w.classList.toggle('open');
+    const btn = document.getElementById('bh-fab-btn');
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+    function closeBhFabMenu() {
+    const w = document.getElementById('bh-fab-wrap');
+    if (w) w.classList.remove('open');
+    const btn = document.getElementById('bh-fab-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+    document.addEventListener('click', (e) => {
+    const w = document.getElementById('bh-fab-wrap');
+    if (w && w.classList.contains('open') && !w.contains(e.target)) closeBhFabMenu();
+});
+    function bhFabAction(type) {
+    closeBhFabMenu();
+    if (type === 'preview') { window.innerWidth < 768 ? toggleMobilePreview() : togglePreviewFull(); }
+    else if (type === 'editor') toggleEditorPanel();
+    else if (type === 'ats') toggleAtsPanel();
+    else if (type === 'cover') createNewCoverLetter(currentCvId);
+    else if (type === 'download') exportPDF();
 }
     function togglePreviewFull(){ document.getElementById('preview-area').classList.toggle('preview-full'); requestAnimationFrame(scalePreviewToFit); }
 
