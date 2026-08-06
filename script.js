@@ -2660,10 +2660,20 @@ function finalizeImportedResume(parsed, truncated) {
 }
 
 
+// Selectors for blocks that should never be visually cut in half by a PDF
+// page break. `.entry`/`.combined-entry`/etc. cover a whole job/education
+// item across the different templates; `.entry-header` (title + dates row)
+// is protected on its own too, as a fallback for entries with a long bullet
+// list that are themselves taller than one page — in that case the block
+// break can't be fully honored, but at minimum the header line won't be
+// split from itself the way "Grade EDC" was.
 const PDF_ATOMIC_BLOCK_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item, .ref-item, .side-item, .side-section, .main-section, .skillbar-row, .skill-tag, .strengths-row, .starter-photo, .mono-badge, .facet-badge';
 const PDF_ATOMIC_HEADER_SELECTOR = '.entry-header';
 
-
+// Measures, in canvas-pixel space, the vertical ranges that a PDF page
+// break must not fall inside. Must be called while `root` is still live
+// DOM (before html2canvas rasterizes it) since that's the only point at
+// which we know where one resume entry ends and the next begins.
 function getUnsafePageBreakZones(root, canvasScale) {
     const rootTop = root.getBoundingClientRect().top;
     const zones = [];
@@ -2683,7 +2693,12 @@ function getUnsafePageBreakZones(root, canvasScale) {
     return zones;
 }
 
-
+// Given the "natural" break point a fixed-height slice would use, nudge it
+// up to the start of any unsafe zone it would otherwise cut through — so
+// the whole entry (or at least its header) moves to the next page intact
+// instead of being split across two pages. If the zone itself is taller
+// than a full page (an entry with a huge bullet list), there's no way to
+// avoid splitting it, so it's left alone rather than looping forever.
 function resolvePageBreak(naturalY, pageTop, pxPerPage, unsafeZones) {
     for (const zone of unsafeZones) {
         if (naturalY > zone.top && naturalY < zone.bottom) {
@@ -2749,7 +2764,12 @@ async function exportPDFDirect() {
         || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
         || '#FAF6EF';
 
-    
+    // Capture the pixel ranges of any block that must never be sliced in
+    // half by a page break (a job/education entry, or at minimum its
+    // title+dates header row). This has to be measured now, while `clone`
+    // is still real DOM — once html2canvas flattens it into a bitmap there
+    // is no way to know where one entry ends and the next begins.
+    const CANVAS_SCALE = 2; // must match the `scale` option passed to html2canvas below
     const unsafeZones = getUnsafePageBreakZones(clone, CANVAS_SCALE);
 
     try {
@@ -2779,33 +2799,27 @@ async function exportPDFDirect() {
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
         } else {
-            let paddedPages = Math.ceil(imgH / pxPerPage);
-            const spill = imgH % pxPerPage;
-            const MIN_MEANINGFUL_SPILL = pxPerPage * 0.08;
-
-            if (spill > 0 && spill < MIN_MEANINGFUL_SPILL && paddedPages > 1) {
-                paddedPages -= 1;
-            }
-            const paddedH = paddedPages * pxPerPage;
-
-            let sourceCanvas = canvas;
-            if (paddedH > imgH) {
-                const padded = document.createElement('canvas');
-                padded.width = imgW;
-                padded.height = paddedH;
-                const pctx = padded.getContext('2d');
-                pctx.fillStyle = paperColor;
-                pctx.fillRect(0, 0, imgW, paddedH);
-                pctx.drawImage(canvas, 0, 0);
-                // Stretch the last row of real pixels down to fill the gap.
-                pctx.drawImage(canvas, 0, imgH - 1, imgW, 1, 0, imgH, imgW, paddedH - imgH);
-                sourceCanvas = padded;
-            }
+            // Slice against the real content height. Pre-padding to a fixed
+            // page count (the old approach) doesn't know in advance how much
+            // resolvePageBreak() will shrink a page to avoid cutting a block
+            // in half, so it could stretch a white gap into page 1 and spill
+            // a near-empty page 3. Instead, slice first and only pad if a
+            // genuinely tiny sliver of real content is left dangling.
+            const MIN_MEANINGFUL_SLIVER = pxPerPage * 0.08;
 
             let yOffset = 0;
-            while (yOffset < paddedH) {
-                const naturalBreak = Math.min(yOffset + pxPerPage, paddedH);
-                const breakY = resolvePageBreak(naturalBreak, yOffset, pxPerPage, unsafeZones);
+            while (yOffset < imgH) {
+                const naturalBreak = Math.min(yOffset + pxPerPage, imgH);
+                let breakY = resolvePageBreak(naturalBreak, yOffset, pxPerPage, unsafeZones);
+
+                // If the nudge leaves only a sliver of real content dangling
+                // for the next page, just extend this page to absorb it
+                // rather than spawning a near-blank trailing page.
+                const remainder = imgH - breakY;
+                if (remainder > 0 && remainder < MIN_MEANINGFUL_SLIVER) {
+                    breakY = imgH;
+                }
+
                 const sliceH = Math.max(breakY - yOffset, 1);
                 const sliceCanvas = document.createElement('canvas');
                 sliceCanvas.width = imgW;
@@ -2813,11 +2827,11 @@ async function exportPDFDirect() {
                 const sctx = sliceCanvas.getContext('2d');
                 sctx.fillStyle = paperColor;
                 sctx.fillRect(0, 0, imgW, sliceH);
-                sctx.drawImage(sourceCanvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+                sctx.drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
                 const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
                 if (yOffset > 0) pdf.addPage();
                 pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
-                yOffset += sliceH;
+                yOffset = breakY;
             }
         }
 
@@ -2877,8 +2891,10 @@ async function exportCoverLetterPDFDirect() {
 
     const paperColor = '#FFFFFF';
 
-    
-    const CANVAS_SCALE = 2;
+    // See getUnsafePageBreakZones() near exportPDFDirect for why this has
+    // to be measured from the live DOM clone before html2canvas flattens
+    // it into a bitmap.
+    const CANVAS_SCALE = 2; // must match the `scale` option passed to html2canvas below
     const unsafeZones = getUnsafePageBreakZones(clone, CANVAS_SCALE);
 
     try {
@@ -2908,38 +2924,35 @@ async function exportCoverLetterPDFDirect() {
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
         } else {
-            
-const MIN_MEANINGFUL_SLIVER = pxPerPage * 0.08;
+            // See the matching comment in exportPDFDirect() for why this
+            // slices against real content height instead of pre-padding.
+            const MIN_MEANINGFUL_SLIVER = pxPerPage * 0.08;
 
-let yOffset = 0;
-while (yOffset < imgH) {
-    const naturalBreak = Math.min(yOffset + pxPerPage, imgH);
-    let breakY = resolvePageBreak(naturalBreak, yOffset, pxPerPage, unsafeZones);
+            let yOffset = 0;
+            while (yOffset < imgH) {
+                const naturalBreak = Math.min(yOffset + pxPerPage, imgH);
+                let breakY = resolvePageBreak(naturalBreak, yOffset, pxPerPage, unsafeZones);
 
-    
-    const remainder = imgH - breakY;
-    if (remainder > 0 && remainder < MIN_MEANINGFUL_SLIVER) {
-        breakY = imgH;
-    }
+                const remainder = imgH - breakY;
+                if (remainder > 0 && remainder < MIN_MEANINGFUL_SLIVER) {
+                    breakY = imgH;
+                }
 
-    const sliceH = Math.max(breakY - yOffset, 1);
-    const sliceCanvas = document.createElement('canvas');
-    sliceCanvas.width = imgW;
-    sliceCanvas.height = sliceH;
-    const sctx = sliceCanvas.getContext('2d');
-    sctx.fillStyle = paperColor;
-    sctx.fillRect(0, 0, imgW, sliceH);
-    sctx.drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
-    const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
-    if (yOffset > 0) pdf.addPage();
-    pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
-    yOffset = breakY;
-}
+                const sliceH = Math.max(breakY - yOffset, 1);
+                const sliceCanvas = document.createElement('canvas');
+                sliceCanvas.width = imgW;
+                sliceCanvas.height = sliceH;
+                const sctx = sliceCanvas.getContext('2d');
+                sctx.fillStyle = paperColor;
+                sctx.fillRect(0, 0, imgW, sliceH);
+                sctx.drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
+                const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+                if (yOffset > 0) pdf.addPage();
+                pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
+                yOffset = breakY;
+            }
+        }
 
-const pageCount = pdf.internal.getNumberOfPages();
-if (pageCount > 1) {
-    
-}
         const name = (clData.sender.fullName || 'Cover_Letter').replace(/\s+/g, '_');
         pdf.save(`${name}_Cover_Letter.pdf`);
         toast.classList.remove('show');
