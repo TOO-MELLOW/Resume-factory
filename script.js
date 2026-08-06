@@ -2660,14 +2660,7 @@ function finalizeImportedResume(parsed, truncated) {
 }
 
 
-// Selectors for blocks that should never be visually cut in half by a PDF
-// page break. `.entry`/`.combined-entry`/etc. cover a whole job/education
-// item across the different templates; `.entry-header` (title + dates row)
-// is protected on its own too, as a fallback for entries with a long bullet
-// list that are themselves taller than one page — in that case the block
-// break can't be fully honored, but at minimum the header line won't be
-// split from itself the way "Grade EDC" was.
-const PDF_ATOMIC_BLOCK_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item';
+const PDF_ATOMIC_BLOCK_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item, .ref-item, .side-item, .side-section, .main-section, .skillbar-row, .skill-tag, .strengths-row, .starter-photo, .mono-badge, .facet-badge';
 const PDF_ATOMIC_HEADER_SELECTOR = '.entry-header';
 
 // Measures, in canvas-pixel space, the vertical ranges that a PDF page
