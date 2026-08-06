@@ -511,7 +511,7 @@ const SIDEBAR_TEMPLATE_IDS = new Set([
         skills(s){ return wrapSide(s.title,s.items.map(it=>`<span class="skill-tag">${escHtml(it.name)}</span>`).join("")); },
         languages(s){ return wrapSide(s.title,s.items.map(it=>`<div class="side-item">${escHtml(it.name)} <span class="meta">— ${escHtml(it.level)}</span></div>`).join("")); },
         certificates(s){ return wrapSide(s.title,s.items.map(it=>`<div class="side-item">${escHtml(it.name)}</div>`).join("")); },
-        references(s){ const h=s.items.map(it=>`<div class="ref-item"><div class="ref-name">${escHtml(it.name)}</div><div class="ref-details">${escHtml(it.title)}</div><div class="ref-contact"><span class="icon-inline" style="color:var(--color-accent)">${icoSVG("phone")}</span>${escHtml(it.phone)} &nbsp;·&nbsp; <span class="icon-inline" style="color:var(--color-accent)">${icoSVG("email")}</span>${escHtml(it.email)}</div></div>`).join(""); return wrapSide(s.title,h); },
+        references(s){ const h=s.items.map(it=>`<div class="ref-item"><div class="ref-name">${escHtml(it.name)}</div><div class="ref-details">${escHtml(it.title)}</div><div class="ref-contact"><span class="icon-inline" style="color:var(--color-accent)">${icoSVG("phone")}</span>${escHtml(it.phone)} &nbsp;·&nbsp; ${escHtml(it.email)}</div></div>`).join(""); return wrapSide(s.title,h); },
         interests(s){ const line=s.items.map(it=>escHtml(it.value)).join(" · "); return wrapSide(s.title,line?`<p class="side-item" style="line-height:1.5">${line}</p>`:""); },
         strengths(s){ const chips=s.items.filter(it=>it.value&&it.value.trim()).map(it=>`<span class="strength-chip">${escHtml(it.value)}</span>`).join(""); return wrapSide(s.title,chips?`<div class="strengths-row">${chips}</div>`:""); }
     };
@@ -599,8 +599,8 @@ const SIDEBAR_TEMPLATE_IDS = new Set([
         const skillsHtml=skillsSec?`<div class="main-section"><p class="starter-sec-title">${escHtml(skillsSec.title)}</p>${skillsSec.items.length?skillsSec.items.map(it=>{const pct=SKILL_LEVEL_PCT[it.level]||55;return`<div class="skillbar-row"><div class="skillbar-lbl">${escHtml(it.name)}</div><div class="skillbar-track"><div class="skillbar-fill" style="width:${pct}%"></div></div><span class="skillbar-pct">${pct}%</span></div>`;}).join(""):`<p class="empty-note">None added.</p>`}</div>`:"";
         const restSecs=vis.filter(s=>s!==strengthsSec&&s.type!=="skills"&&s.type!=="personal-info");
         const restHtml=restSecs.map(s=>{const inner=SR[s.type]?SR[s.type](s):"";return `<div class="main-section"><p class="starter-sec-title">${escHtml(s.title)}</p>${inner.replace(/<p class="(main|side)-label">.*?<\/p>/,"")}</div>`;}).join("");
-        const photoEl=p.photo?`<img src="${p.photo}">`:`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
-        return `<div class="starter-header"><div class="starter-photo">${photoEl}</div><div><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p></div></div><div class="starter-contact-row">${atsContactLine(p)}</div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${strengthsHtml}${skillsHtml}${restHtml}</div>`;
+        const photoEl=p.photo?`<div class="starter-photo"><img src="${p.photo}" alt="Photo"></div>`:'';
+        return `<div class="starter-header">${photoEl}<div><p class="name">${escHtml(p.fullName)}</p><p class="job-title">${escHtml(p.jobTitle)}</p></div></div><div class="starter-contact-row">${atsContactLine(p)}</div><div class="main"><p class="summary">${escHtml(p.summary)}</p>${strengthsHtml}${skillsHtml}${restHtml}</div>`;
     }
     function renderCombined(data) {
         const p=data.personalDetails, vis=data.sections.filter(s=>s.visible).sort((a,b)=>a.order-b.order);
@@ -886,7 +886,7 @@ function generateSectionItems(sec) {
             inner = sec.items.map(it => `<div class="side-item">${escHtml(it.name)}</div>`).join('');
             break;
         case 'references':
-            inner = sec.items.map(it => `<div class="ref-item"><div class="ref-name">${escHtml(it.name)}</div><div class="ref-details">${escHtml(it.title)}</div><div class="ref-contact"><span class="icon-inline" style="color:var(--color-accent)">${icoSVG("phone")}</span>${escHtml(it.phone)} &nbsp;·&nbsp; <span class="icon-inline" style="color:var(--color-accent)">${icoSVG("email")}</span>${escHtml(it.email)}</div></div>`).join('');
+            inner = sec.items.map(it => `<div class="ref-item"><div class="ref-name">${escHtml(it.name)}</div><div class="ref-details">${escHtml(it.title)}</div><div class="ref-contact"><span class="icon-inline" style="color:var(--color-accent)">${icoSVG("phone")}</span>${escHtml(it.phone)} &nbsp;·&nbsp; ${escHtml(it.email)}</div></div>`).join('');
             break;
         case 'interests':
             inner = sec.items.map(it => escHtml(it.value)).join(" · ");
