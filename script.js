@@ -1260,43 +1260,137 @@ function hashToView(hash) {
     return NAV_VIEWS.includes(v) ? v : 'landing';
 }
 
-function navigate(view, opts={}) {
-    closeMobilePreview();
-    document.body.setAttribute('data-view', view);
-    if (view==='manager') renderManager();
-    if (view==='builder') { if(!cvData)loadData(); renderPreview(); setStep(currentStep); updatePaLabel(); }
-    if (view==='clbuilder') {
-        if (!clData) {
-            const ids = Object.keys(allCoverLetters);
-            if (ids.length) { currentClId = ids[0]; clData = allCoverLetters[currentClId]; }
-        }
-        if (clData) { renderCLForm(); renderCoverLetterPreview(); updateAutosaveLabelCL(); }
-        else {
-            const fp = document.getElementById('cl-form-panel');
-            const pr = document.getElementById('cl-preview-root');
-            if (fp) fp.innerHTML = '<p style="padding:20px;color:var(--t3)">No cover letter selected. <a onclick="navigate(\'manager\')" style="cursor:pointer;color:var(--accent)">Go to My Resumes</a> to create one.</p>';
-            if (pr) pr.innerHTML = '';
-        }
-    }
-    if (view==='gallery') renderGallery();
-    if (view==='landing') { renderHeroCv(); renderShowcaseStrip(); }
-    window.scrollTo(0,0);
-    if (atsPanelOpen) { atsPanelOpen=false; document.getElementById('ats-panel').classList.remove('open'); }
-    closeTips();
-    closeQuickFab();
-    closeImportModal();
-    document.getElementById('preview-area').classList.remove('preview-full');
+// ─── Page meta config ────────────────────────────────────────────────────────
 
-    // Keep the URL and the browser back/forward button in sync with the
-    // visible view. Previously the URL never changed on navigation, so a
-    // click gave no visible confirmation that anything had happened, and
-    // the back button would leave the site instead of going to the
-    // previous view.
-    if (!opts.skipHistory) {
-        const hash = view === 'landing' ? '#' : '#' + view;
-        if (location.hash !== hash) history.pushState({ view }, '', hash);
-    }
+const PAGE_META = {
+  landing: {
+    title: 'Mellow CV Factory | Professional Resume Builder',
+    description: 'Build a professional, ATS-ready resume in minutes with expert templates and AI-powered writing assistance. Free, no account needed.',
+    url: 'https://resume-factory-brown.vercel.app/',
+  },
+  gallery: {
+    title: 'Resume Templates | Mellow CV Factory',
+    description: 'Browse 43 professional resume templates — modern, ATS-friendly, executive, creative, student, and trade layouts.',
+    url: 'https://resume-factory-brown.vercel.app/gallery',
+  },
+  manager: {
+    title: 'My Resumes | Mellow CV Factory',
+    description: 'View, edit, and manage all your saved resumes and cover letters in one place.',
+    url: 'https://resume-factory-brown.vercel.app/manager',
+  },
+  builder: {
+    title: 'Build Your Resume | Mellow CV Factory',
+    description: 'Create a polished, ATS-ready resume with AI writing help, live preview, and one-click PDF download.',
+    url: 'https://resume-factory-brown.vercel.app/builder',
+  },
+  clbuilder: {
+    title: 'Cover Letter Builder | Mellow CV Factory',
+    description: 'Write a professional cover letter in minutes with AI assistance and a live preview.',
+    url: 'https://resume-factory-brown.vercel.app/cover-letter',
+  },
+};
+
+const VIEW_TO_PATH = {
+  landing:   '/',
+  gallery:   '/gallery',
+  manager:   '/manager',
+  builder:   '/builder',
+  clbuilder: '/cover-letter',
+};
+
+const PATH_TO_VIEW = {
+  '/':             'landing',
+  '/gallery':      'gallery',
+  '/manager':      'manager',
+  '/builder':      'builder',
+  '/cover-letter': 'clbuilder',
+};
+
+function setMeta(attr, key, value) {
+  let el = document.querySelector(`meta[${attr}="${key}"]`);
+  if (!el) {
+    el = document.createElement('meta');
+    el.setAttribute(attr, key);
+    document.head.appendChild(el);
+  }
+  el.setAttribute('content', value);
 }
+
+function updatePageMeta(view) {
+  const meta = PAGE_META[view] || PAGE_META.landing;
+  document.title = meta.title;
+  setMeta('name',     'description',       meta.description);
+  setMeta('property', 'og:title',          meta.title);
+  setMeta('property', 'og:description',    meta.description);
+  setMeta('property', 'og:url',            meta.url);
+  setMeta('name',     'twitter:title',     meta.title);
+  setMeta('name',     'twitter:description', meta.description);
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    document.head.appendChild(canonical);
+  }
+  canonical.href = meta.url;
+}
+
+// ─── navigate() ──────────────────────────────────────────────────────────────
+
+function navigate(view, opts = {}) {
+  // YOUR original logic — untouched
+  closeMobilePreview();
+  document.body.setAttribute('data-view', view);
+  if (view === 'manager') renderManager();
+  if (view === 'builder') { if (!cvData) loadData(); renderPreview(); setStep(currentStep); updatePaLabel(); }
+  if (view === 'clbuilder') {
+    if (!clData) {
+      const ids = Object.keys(allCoverLetters);
+      if (ids.length) { currentClId = ids[0]; clData = allCoverLetters[currentClId]; }
+    }
+    if (clData) { renderCLForm(); renderCoverLetterPreview(); updateAutosaveLabelCL(); }
+    else {
+      const fp = document.getElementById('cl-form-panel');
+      const pr = document.getElementById('cl-preview-root');
+      if (fp) fp.innerHTML = '<p style="padding:20px;color:var(--t3)">No cover letter selected. <a onclick="navigate(\'manager\')" style="cursor:pointer;color:var(--accent)">Go to My Resumes</a> to create one.</p>';
+      if (pr) pr.innerHTML = '';
+    }
+  }
+  if (view === 'gallery') renderGallery();
+  if (view === 'landing') { renderHeroCv(); renderShowcaseStrip(); }
+  window.scrollTo(0, 0);
+  if (atsPanelOpen) { atsPanelOpen = false; document.getElementById('ats-panel').classList.remove('open'); }
+  closeTips();
+  closeQuickFab();
+  closeImportModal();
+  document.getElementById('preview-area').classList.remove('preview-full');
+
+  // NEW: real URL paths instead of hashes + meta update
+  if (!opts.skipHistory) {
+    const path = VIEW_TO_PATH[view] || '/';
+    if (window.location.pathname !== path) {
+      history.pushState({ view }, '', path);
+    }
+  }
+  updatePageMeta(view);
+}
+
+// ─── Back / forward button support ───────────────────────────────────────────
+
+window.addEventListener('popstate', (e) => {
+  const view = (e.state && e.state.view)
+    ? e.state.view
+    : PATH_TO_VIEW[window.location.pathname] || 'landing';
+  navigate(view, { skipHistory: true });
+});
+
+// ─── On first load: resolve view from URL path ────────────────────────────────
+
+(function initViewFromURL() {
+  const view = PATH_TO_VIEW[window.location.pathname] || 'landing';
+  document.body.setAttribute('data-view', view);
+  updatePageMeta(view);
+  history.replaceState({ view }, '', window.location.pathname);
+})();
 
 window.addEventListener('popstate', (e) => {
     const view = (e.state && e.state.view) || hashToView(location.hash);
@@ -2649,19 +2743,7 @@ function getUnsafePageBreakZones(root, canvasScale) {
     return zones;
 }
 
-// Given the "natural" break point a fixed-height slice would use, nudge it
-// up to the start of any unsafe zone it would otherwise cut through — so
-// the whole entry (or at least its header) moves to the next page intact
-// instead of being split across two pages. If the zone itself is taller
-// than a full page (an entry with a huge bullet list), there's no way to
-// avoid splitting it, so it's left alone rather than looping forever.
-//
-// Zones nest (e.g. a whole `.main-section` contains several `.entry`
-// blocks), and a naturalY can fall inside several of them at once. We want
-// the SMALLEST containing zone that actually fits on a page — usually the
-// individual entry — not whichever zone happens to be checked first. A
-// wrapping section that's taller than one page must never shadow a smaller
-// entry inside it that would otherwise fit.
+
 function resolvePageBreak(naturalY, pageTop, pxPerPage, unsafeZones) {
     let best = null;
     for (const zone of unsafeZones) {
@@ -2742,12 +2824,8 @@ async function exportPDFDirect() {
         || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
         || '#FAF6EF';
 
-    // Capture the pixel ranges of any block that must never be sliced in
-    // half by a page break (a job/education entry, or at minimum its
-    // title+dates header row). This has to be measured now, while `clone`
-    // is still real DOM — once html2canvas flattens it into a bitmap there
-    // is no way to know where one entry ends and the next begins.
-    const CANVAS_SCALE = 2; // must match the `scale` option passed to html2canvas below
+    
+    const CANVAS_SCALE = 2;
     const unsafeZones = getUnsafePageBreakZones(clone, CANVAS_SCALE);
 
     try {
