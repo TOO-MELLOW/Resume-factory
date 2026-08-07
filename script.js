@@ -2848,6 +2848,18 @@ function hexToRgb(hex) {
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+// Reads an element's actually-rendered background color, no matter how it
+// was set in CSS (a --color-paper variable, a hardcoded per-template hex,
+// inheritance, whatever). Used instead of guessing at a specific CSS
+// variable so the PDF page-fill color always matches the real template
+// background. Falls back to the shared default paper color (#FAF6EF) only
+// if the computed style can't be parsed at all.
+function resolveBgRgb(el) {
+    const m = String(getComputedStyle(el).backgroundColor || '')
+        .match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    return m ? [+m[1], +m[2], +m[3]] : [250, 246, 239];
+}
+
 async function exportPDFDirect() {
     const { jsPDF } = window.jspdf;
     if (!jsPDF) { showToast('PDF library not loaded', 'error'); return; }
@@ -2856,7 +2868,12 @@ async function exportPDFDirect() {
 
     const A4_W = 794, A4_H = 1123;
     const clone = document.createElement('div');
-    clone.className = 'page';
+    // 'pdf-export-render' opts this clone out of the @media(max-width:767px)
+    // rules in styles.css. Those rules respond to the real browser viewport,
+    // not this element's inline width, so on a phone they would otherwise
+    // collapse two-column templates to one column inside the exported PDF.
+    // See the .pdf-export-render override block near the bottom of styles.css.
+    clone.className = 'page pdf-export-render';
     clone.setAttribute('data-template', currentTemplateId);
     clone.style.cssText = `
         position: fixed;
@@ -2890,11 +2907,17 @@ async function exportPDFDirect() {
         await new Promise(r => setTimeout(r, 150));
     }
 
-    const paperColor = ov.paperColor
-        || getComputedStyle(clone).getPropertyValue('--color-paper').trim()
-        || '#FAF6EF';
+    // Most templates set their background as a hardcoded hex directly on
+    // .page[data-template="..."] rather than through the --color-paper
+    // variable (that variable is only ever set when the user picks a custom
+    // paper color), so reading --color-paper alone silently fell back to a
+    // default that didn't match the real background on most templates —
+    // visible as a mismatched-color band wherever the PDF page fill shows
+    // through. Reading the resolved backgroundColor instead is correct
+    // regardless of how the background was authored in CSS.
+    const [paperR, paperG, paperB] = ov.paperColor ? hexToRgb(ov.paperColor) : resolveBgRgb(clone);
+    const paperColor = `rgb(${paperR}, ${paperG}, ${paperB})`;
 
-    
     const CANVAS_SCALE = 2;
     const unsafeZones = getUnsafePageBreakZones(clone, CANVAS_SCALE);
 
@@ -2920,8 +2943,6 @@ async function exportPDFDirect() {
         const mmPerPx = pageW / imgW;
         const totalMM = imgH * mmPerPx;
         const pxPerPage = Math.round(pageH / mmPerPx);
-
-        const [paperR, paperG, paperB] = hexToRgb(paperColor);
 
         if (totalMM <= pageH + 2) {
             pdf.setFillColor(paperR, paperG, paperB);
@@ -3001,7 +3022,10 @@ async function exportCoverLetterPDFDirect() {
 
     const A4_W = 794, A4_H = 1123;
     const clone = document.createElement('div');
-    clone.className = 'cl-page';
+    // See the matching comment in exportPDFDirect() — keeps this clone out
+    // of the mobile-viewport media query rules regardless of the real
+    // device's screen width.
+    clone.className = 'cl-page pdf-export-render';
     clone.style.cssText = `
         position: fixed;
         left: -9999px;
