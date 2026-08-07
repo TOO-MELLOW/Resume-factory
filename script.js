@@ -2718,6 +2718,19 @@ function exportPDF() {
     attemptDownload('cv', currentTemplateId);
 }
 
+// jsPDF pages default to a plain white fill. Any page whose sliced content
+// is shorter than a full A4 (the last page almost always, since content
+// rarely divides evenly into whole pages) leaves that default white showing
+// below the image instead of the resume's actual paper color — visible as
+// a hard white cutoff on templates using an off-white/cream paper.
+function hexToRgb(hex) {
+    let h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h, 16);
+    if (h.length !== 6 || Number.isNaN(n)) return [255, 255, 255];
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
 async function exportPDFDirect() {
     const { jsPDF } = window.jspdf;
     if (!jsPDF) { showToast('PDF library not loaded', 'error'); return; }
@@ -2795,7 +2808,11 @@ async function exportPDFDirect() {
         const totalMM = imgH * mmPerPx;
         const pxPerPage = Math.round(pageH / mmPerPx);
 
+        const [paperR, paperG, paperB] = hexToRgb(paperColor);
+
         if (totalMM <= pageH + 2) {
+            pdf.setFillColor(paperR, paperG, paperB);
+            pdf.rect(0, 0, pageW, pageH, 'F');
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
         } else {
@@ -2830,6 +2847,14 @@ async function exportPDFDirect() {
                 sctx.drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
                 const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
                 if (yOffset > 0) pdf.addPage();
+                // Fill the FULL physical A4 page with the paper color first —
+                // the image below may be shorter than pageH (this is always
+                // true on the last page, and can happen on earlier pages
+                // when resolvePageBreak() shortens one to avoid splitting an
+                // entry), otherwise jsPDF's default white fill shows through
+                // beneath it.
+                pdf.setFillColor(paperR, paperG, paperB);
+                pdf.rect(0, 0, pageW, pageH, 'F');
                 pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
                 yOffset = breakY;
             }
@@ -2920,7 +2945,11 @@ async function exportCoverLetterPDFDirect() {
         const totalMM = imgH * mmPerPx;
         const pxPerPage = Math.round(pageH / mmPerPx);
 
+        const [paperR, paperG, paperB] = hexToRgb(paperColor);
+
         if (totalMM <= pageH + 2) {
+            pdf.setFillColor(paperR, paperG, paperB);
+            pdf.rect(0, 0, pageW, pageH, 'F');
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             pdf.addImage(imgData, 'JPEG', 0, 0, pageW, Math.min(totalMM, pageH));
         } else {
@@ -2948,6 +2977,8 @@ async function exportCoverLetterPDFDirect() {
                 sctx.drawImage(canvas, 0, yOffset, imgW, sliceH, 0, 0, imgW, sliceH);
                 const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
                 if (yOffset > 0) pdf.addPage();
+                pdf.setFillColor(paperR, paperG, paperB);
+                pdf.rect(0, 0, pageW, pageH, 'F');
                 pdf.addImage(sliceData, 'JPEG', 0, 0, pageW, sliceH * mmPerPx);
                 yOffset = breakY;
             }
