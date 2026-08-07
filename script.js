@@ -430,50 +430,6 @@ const BLANK = {
     const SVGS = {};
     allTemplateIds.forEach(id => { SVGS[id] = generateThumbnailSVG(id); });
 
-// ---- TEMPLATE FETCHER ----
-const TEMPLATE_IDS = TEMPLATE_CONFIGS.map(t => t.id);
-const TEMPLATE_BASE = './templates/'; 
-const templateCache = {};
-
-async function fetchAllTemplates() {
-    const promises = TEMPLATE_IDS.map(async (id) => {
-        try {
-            const response = await fetch(`${TEMPLATE_BASE}template-${id}.html`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const html = await response.text();
-            templateCache[id] = html;
-        } catch (error) {
-            console.error(`Failed to load template ${id}:`, error);
-            templateCache[id] = `<p class="error">Template not found</p>`;
-        }
-    });
-    await Promise.all(promises);
-    console.log('✅ All templates loaded.');
-}
-
-function renderTemplate(templateId, data) {
-    let html = templateCache[templateId] || `<p class="error">Template ${templateId} not loaded.</p>`;
-
-    const p = data.personalDetails;
-    html = html.replace(/\{\{fullName\}\}/g, escHtml(p.fullName));
-    html = html.replace(/\{\{jobTitle\}\}/g, escHtml(p.jobTitle));
-    html = html.replace(/\{\{summary\}\}/g, escHtml(p.summary));
-    html = html.replace(/\{\{email\}\}/g, escHtml(p.email));
-    html = html.replace(/\{\{phone\}\}/g, escHtml(p.phone));
-    html = html.replace(/\{\{location\}\}/g, escHtml(p.location));
-    html = html.replace(/\{\{photo\}\}/g, p.photo ? `<img src="${p.photo}" alt="Photo">` : '');
-    html = html.replace(/\{\{contactList\}\}/g, contactListHtml(p));
-    html = html.replace(/\{\{atsContactLine\}\}/g, atsContactLine(p));
-
-    const visibleSections = data.sections.filter(s => s.visible).sort((a,b) => a.order - b.order);
-    let sectionsHtml = '';
-    for (const sec of visibleSections) {
-        sectionsHtml += SR[sec.type] ? SR[sec.type](sec) : '';
-    }
-    html = html.replace(/\{\{sections\}\}/g, sectionsHtml);
-
-    return html;
-}
 
    function renderTemplateContent(data, tid) {
     if (tid==='executive-02')      return renderExecutive02(data);
@@ -1494,7 +1450,7 @@ function renderMobilePreview() {
     if(ov.paperColor) el.style.setProperty('--color-paper',ov.paperColor); else el.style.removeProperty('--color-paper');
     el.style.setProperty('--scale',ov.fontSizeScale||1);
     el.style.setProperty('--spacing',ov.spacingScale||1);
-    el.innerHTML = renderTemplate(currentTemplateId, cvData);
+    el.innerHTML = renderTemplateContent(cvData, currentTemplateId);
     body.innerHTML='';
     body.appendChild(el);
     requestAnimationFrame(scaleMobilePreviewToFit);
@@ -2667,7 +2623,7 @@ function finalizeImportedResume(parsed, truncated) {
 // list that are themselves taller than one page — in that case the block
 // break can't be fully honored, but at minimum the header line won't be
 // split from itself the way "Grade EDC" was.
-const PDF_ATOMIC_BLOCK_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item, .ref-item, .side-item, .side-section, .main-section, .skillbar-row, .skill-tag, .strengths-row, .starter-photo, .mono-badge, .facet-badge';
+const PDF_ATOMIC_BLOCK_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item, .ref-item, .side-item, .side-section, .main-section, .skillbar-row, .skill-tag, .strengths-row, .starter-photo, .mono-badge, .facet-badge, .strength-chip, .trade-badge, .trade2-cred, .trade2-tool, .split-card, .split-rail-item, .split-rail-block, .duo-skill-row, .facet-skill-row, .mono-skill-row, .functional-group, .avail-item';
 const PDF_ATOMIC_HEADER_SELECTOR = '.entry-header';
 
 // Measures, in canvas-pixel space, the vertical ranges that a PDF page
@@ -2699,19 +2655,28 @@ function getUnsafePageBreakZones(root, canvasScale) {
 // instead of being split across two pages. If the zone itself is taller
 // than a full page (an entry with a huge bullet list), there's no way to
 // avoid splitting it, so it's left alone rather than looping forever.
+//
+// Zones nest (e.g. a whole `.main-section` contains several `.entry`
+// blocks), and a naturalY can fall inside several of them at once. We want
+// the SMALLEST containing zone that actually fits on a page — usually the
+// individual entry — not whichever zone happens to be checked first. A
+// wrapping section that's taller than one page must never shadow a smaller
+// entry inside it that would otherwise fit.
 function resolvePageBreak(naturalY, pageTop, pxPerPage, unsafeZones) {
+    let best = null;
     for (const zone of unsafeZones) {
         if (naturalY > zone.top && naturalY < zone.bottom) {
             const zoneHeight = zone.bottom - zone.top;
             const fitsOnOnePage = zoneHeight <= pxPerPage;
             const canMoveWholeZoneToNextPage = zone.top > pageTop;
             if (fitsOnOnePage && canMoveWholeZoneToNextPage) {
-                return zone.top;
+                if (!best || zoneHeight < (best.bottom - best.top)) {
+                    best = zone;
+                }
             }
-            break;
         }
     }
-    return naturalY;
+    return best ? best.top : naturalY;
 }
 
 function exportPDF() {
@@ -3031,7 +2996,7 @@ function renderHeroCv() {
     page.className = 'page'; page.setAttribute('data-template','modern-01');
     page.style.cssText = 'width:794px;min-height:1123px;'; page.style.setProperty('--color-accent','#2F6F63');
     const heroData = JSON.parse(document.getElementById('cv-data').textContent);
-    page.innerHTML = renderTemplate('modern-01', heroData);
+    page.innerHTML = renderTemplateContent(heroData, 'modern-01');
     inner.innerHTML = ''; inner.appendChild(page);
 }
 function renderShowcaseStrip() {
@@ -3124,7 +3089,6 @@ async function handlePaymentReturn() {
 
 // ---------- INIT ----------
 document.addEventListener('DOMContentLoaded', async () => {
-    await fetchAllTemplates(); 
     loadData();
     loadAllCoverLetters();
     lastSavedAt = Date.now();
