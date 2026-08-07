@@ -2720,6 +2720,34 @@ function finalizeImportedResume(parsed, truncated) {
 const PDF_ATOMIC_BLOCK_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item, .ref-item, .side-item, .side-section, .main-section, .skillbar-row, .skill-tag, .strengths-row, .starter-photo, .mono-badge, .facet-badge, .strength-chip, .trade-badge, .trade2-cred, .trade2-tool, .split-card, .split-rail-item, .split-rail-block, .duo-skill-row, .facet-skill-row, .mono-skill-row, .functional-group, .avail-item';
 const PDF_ATOMIC_HEADER_SELECTOR = '.entry-header';
 
+// `.entry` etc. above cover a whole card, but a card with 4-5 long bullets
+// can itself be taller than one page — in that case the block-level zone
+// above is intentionally skipped (it can't fit on one page either way) and
+// without this, a break would fall through into the middle of a bullet.
+// Protecting `ul`/`li` individually gives the algorithm a smaller, always-
+// fittable fallback zone so the break at least lands between bullets
+// instead of inside one.
+const PDF_ATOMIC_LIST_SELECTOR = 'ul, li';
+
+// Section headers ("Experience", "Skills", etc.) aren't wrapped together
+// with their first entry in the DOM — they're either a plain sibling
+// paragraph in front of a list of entries, or, when they are wrapped
+// (`.main-section`/`.side-section`), that wrapper spans the *entire*
+// section and is almost always taller than one page, so it gets excluded
+// by the fits-on-one-page check same as an oversized `.entry` would. Either
+// way, the header line itself has no zone tying it to the content below
+// it, so it can be stranded alone at the bottom of a page. This selector
+// is used to find those headers so a synthetic pairing zone can be built
+// for each one (see getUnsafePageBreakZones).
+const PDF_SECTION_HEADER_SELECTOR = '.main-label, .side-label, .combined-sec-title, .functional-sec-title, .practical-sec-title, .starter-sec-title, .trade-sec-title, .mono-kicker';
+
+// Candidates a section header can be paired with — deliberately the same
+// entry-level items as PDF_ATOMIC_BLOCK_SELECTOR but *without* the
+// `.side-section`/`.main-section` containers, since those are ancestors of
+// the header itself (pairing a header with its own wrapper is meaningless
+// and would confuse the "nearest following element" search below).
+const PDF_SECTION_FOLLOWER_SELECTOR = '.entry, .combined-entry, .practical-entry, .trade-entry, .mono-entry, .functional-history-item, .ref-item, .side-item, .skillbar-row, .skill-tag, .strengths-row, .starter-photo, .mono-badge, .facet-badge, .strength-chip, .trade-badge, .trade2-cred, .trade2-tool, .split-card, .split-rail-item, .split-rail-block, .duo-skill-row, .facet-skill-row, .mono-skill-row, .functional-group, .avail-item';
+
 // Measures, in canvas-pixel space, the vertical ranges that a PDF page
 // break must not fall inside. Must be called while `root` is still live
 // DOM (before html2canvas rasterizes it) since that's the only point at
@@ -2727,18 +2755,55 @@ const PDF_ATOMIC_HEADER_SELECTOR = '.entry-header';
 function getUnsafePageBreakZones(root, canvasScale) {
     const rootTop = root.getBoundingClientRect().top;
     const zones = [];
+    const toZone = (el) => {
+        const r = el.getBoundingClientRect();
+        if (r.height <= 0) return null;
+        return {
+            top: (r.top - rootTop) * canvasScale,
+            bottom: (r.bottom - rootTop) * canvasScale,
+            rectTop: r.top,
+            rectBottom: r.bottom
+        };
+    };
     const collect = (selector) => {
         root.querySelectorAll(selector).forEach(el => {
-            const r = el.getBoundingClientRect();
-            if (r.height <= 0) return;
-            zones.push({
-                top: (r.top - rootTop) * canvasScale,
-                bottom: (r.bottom - rootTop) * canvasScale
-            });
+            const zone = toZone(el);
+            if (zone) zones.push({ top: zone.top, bottom: zone.bottom });
         });
     };
     collect(PDF_ATOMIC_BLOCK_SELECTOR);
     collect(PDF_ATOMIC_HEADER_SELECTOR);
+    collect(PDF_ATOMIC_LIST_SELECTOR);
+
+    // Pair each section header with the first entry that belongs to it, so
+    // a break can't land between a header and its content and orphan the
+    // header at the bottom of a page.
+    const headerEls = Array.from(root.querySelectorAll(PDF_SECTION_HEADER_SELECTOR))
+        .map(el => ({ el, zone: toZone(el) }))
+        .filter(h => h.zone)
+        .sort((a, b) => a.zone.rectTop - b.zone.rectTop);
+    const followerEls = Array.from(root.querySelectorAll(PDF_SECTION_FOLLOWER_SELECTOR))
+        .map(el => ({ el, zone: toZone(el) }))
+        .filter(f => f.zone);
+
+    headerEls.forEach((header, i) => {
+        // Anything at/after the top of the *next* header belongs to a
+        // different section and must not be pulled into this pairing.
+        const nextHeaderTop = i + 1 < headerEls.length ? headerEls[i + 1].zone.rectTop : Infinity;
+        let closest = null;
+        followerEls.forEach(follower => {
+            if (header.el === follower.el || header.el.contains(follower.el)) return;
+            const top = follower.zone.rectTop;
+            if (top < header.zone.rectTop || top >= nextHeaderTop) return;
+            if (!closest || top < closest.zone.rectTop) closest = follower;
+        });
+        if (!closest) return;
+        zones.push({
+            top: header.zone.top,
+            bottom: closest.zone.bottom
+        });
+    });
+
     zones.sort((a, b) => a.top - b.top);
     return zones;
 }
@@ -2752,7 +2817,12 @@ function resolvePageBreak(naturalY, pageTop, pxPerPage, unsafeZones) {
             const fitsOnOnePage = zoneHeight <= pxPerPage;
             const canMoveWholeZoneToNextPage = zone.top > pageTop;
             if (fitsOnOnePage && canMoveWholeZoneToNextPage) {
-                if (!best || zoneHeight < (best.bottom - best.top)) {
+                // Prefer the zone whose top starts earliest, i.e. the one
+                // that requires nudging the break up the least. Picking the
+                // smallest zone instead (the old behavior) can jump the
+                // break up past a small zone while leaving a much bigger
+                // empty gap above it than a nearer, larger zone would have.
+                if (!best || zone.top < best.top) {
                     best = zone;
                 }
             }
