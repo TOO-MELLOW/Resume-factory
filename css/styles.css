@@ -894,3 +894,32 @@
 .pa-tb .preview-close {
     display: inline-flex !important;
 }
+
+/* ==========================================================================
+   PDF EXPORT CLONE OVERRIDES
+   The offscreen clones built in exportPDFDirect()/exportCoverLetterPDFDirect()
+   (script.js) always render at a fixed 794px A4 width, tagged with the
+   .pdf-export-render class. But the @media(max-width:767px) rules above
+   respond to the *real* browser viewport, not this element's inline width —
+   so on a phone (or any narrow window) they would otherwise still collapse
+   two-column templates to one column, stack the entry header, and shrink
+   cover-letter padding inside the exported PDF itself. These rules win on
+   specificity alone (an extra class beats the plain selectors above), so
+   they apply correctly regardless of where they sit in the file.
+   ========================================================================== */
+.page.pdf-export-render[data-template="modern-01"],
+.page.pdf-export-render[data-template="modern-02"] { grid-template-columns: 62mm 1fr }
+.page.pdf-export-render[data-template="executive-02"] { grid-template-columns: 65mm 1fr }
+.page.pdf-export-render[data-template^="split-"]  { grid-template-columns: 1fr 60mm }
+.page.pdf-export-render[data-template^="facet-"]  { grid-template-columns: 40mm 1fr }
+.page.pdf-export-render[data-template^="duo-"]    { grid-template-columns: 40mm 1fr }
+.page.pdf-export-render[data-template="practical-02"] { grid-template-columns: 55mm 1fr }
+.page.pdf-export-render[data-template="trade-02"] { grid-template-columns: 55mm 1fr }
+.page.pdf-export-render .entry-header { flex-direction: row }
+.page.pdf-export-render .entry-date   { white-space: nowrap }
+.page.pdf-export-render .cmb-v02   { grid-template-columns: 1fr 220px }
+.page.pdf-export-render .func2-grid,
+.page.pdf-export-render .st3-grid,
+.page.pdf-export-render .split-grid { grid-template-columns: 1fr 1fr }
+
+.cl-page.pdf-export-render { padding: 22mm 20mm; font-size: 13px }
