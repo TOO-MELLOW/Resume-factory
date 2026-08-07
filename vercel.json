@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/gallery",      "destination": "/index.html" },
+    { "source": "/manager",      "destination": "/index.html" },
+    { "source": "/builder",      "destination": "/index.html" },
+    { "source": "/cover-letter", "destination": "/index.html" }
+  ]
+}
